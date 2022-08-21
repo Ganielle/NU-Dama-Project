@@ -1,0 +1,11 @@
+IL2CPP_Release
+Library
+Logs
+MONO_Release
+obj
+Temp
+Release
+.vs
+*.sln
+*.csproj
+*.zip
