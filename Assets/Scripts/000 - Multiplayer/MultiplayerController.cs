@@ -1,3 +1,4 @@
+using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
 using System;
@@ -101,6 +102,7 @@ public class MultiplayerController : MonoBehaviourPunCallbacks
         }
     }
 
+
     //  ====================================
 
 
@@ -112,6 +114,7 @@ public class MultiplayerController : MonoBehaviourPunCallbacks
 
     private bool connectingToServer;
     private bool clientConnectedToServer;
+    private bool matchFound;
 
     //  ====================================
 
@@ -156,6 +159,18 @@ public class MultiplayerController : MonoBehaviourPunCallbacks
         CreateRoom("001", 2);
     }
 
+    public override void OnPlayerEnteredRoom(Player newPlayer)
+    {
+        base.OnPlayerEnteredRoom(newPlayer);
+
+        //  Check if needed to show match found
+        if (PhotonNetwork.IsMasterClient)
+        {
+            CurrentLobbyState = LobbyState.MATCHFOUND;
+            ChangeToMatchFound();
+        }
+    }
+
     public override void OnJoinedRoom()
     {
         base.OnJoinedRoom();
@@ -163,10 +178,29 @@ public class MultiplayerController : MonoBehaviourPunCallbacks
         CurrentLobbyState = LobbyState.FINDINGMATCH;
     }
 
-    //public override void 
+    private void ChangeToMatchFound()
+    {
+        int status = (int)LobbyState.MATCHFOUND;
+
+        object[] data = new object[]
+        {
+            status
+        };
+
+        RaiseEventOptions raiseEventOptions = new RaiseEventOptions
+        {
+            Receivers = ReceiverGroup.Others
+        };
+        SendOptions sendOptions = new SendOptions
+        {
+            Reliability = true
+        };
+        PhotonNetwork.RaiseEvent(19, data, raiseEventOptions, sendOptions);
+    }
 
     public void CreateRoom(string mapCode, byte maxPlayers)
     {
+        Debug.Log("HI ");
         //  This is for creating room
         //  Custom room properties using hashtable
         ExitGames.Client.Photon.Hashtable customRoomProperties = new ExitGames.Client.Photon.Hashtable()

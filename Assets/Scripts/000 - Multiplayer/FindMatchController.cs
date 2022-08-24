@@ -1,4 +1,6 @@
+using ExitGames.Client.Photon;
 using Photon.Pun;
+using Photon.Realtime;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -10,10 +12,12 @@ public class FindMatchController : MonoBehaviourPunCallbacks
 {
     [SerializeField] private GameObject cancelBtn;
     [SerializeField] private GameObject findBtn;
+    [SerializeField] private GameObject matchFoundPanelObj;
     [SerializeField] private Button findMatchBtn;
     [SerializeField] private Button cancelFindBtn;
     [SerializeField] private TextMeshProUGUI timer;
     [SerializeField] private TextMeshProUGUI status;
+    [SerializeField] private TextMeshProUGUI matchFoundTimerTMP;
 
     //  ================================
 
@@ -26,12 +30,14 @@ public class FindMatchController : MonoBehaviourPunCallbacks
     {
         MultiplayerController.instance.OnLobbyStateChange += LobbyStatusChange;
         MultiplayerController.instance.OnClientConnectedChange += ClientConnectedChange;
+        PhotonNetwork.NetworkingClient.EventReceived += MatchmakingEvents;
     }
 
     private void OnDisable()
     {
         MultiplayerController.instance.OnLobbyStateChange -= LobbyStatusChange;
         MultiplayerController.instance.OnClientConnectedChange -= ClientConnectedChange;
+        PhotonNetwork.NetworkingClient.EventReceived -= MatchmakingEvents;
     }
 
     private void Start()
@@ -99,6 +105,10 @@ public class FindMatchController : MonoBehaviourPunCallbacks
             findBtn.SetActive(false);
             cancelBtn.SetActive(true);
         }
+        else if (MultiplayerController.instance.CurrentLobbyState == MultiplayerController.LobbyState.MATCHFOUND)
+        {
+            CheckIfReadyToStartMatch();
+        }
     }
 
     private IEnumerator CancelFindMatch()
@@ -115,6 +125,82 @@ public class FindMatchController : MonoBehaviourPunCallbacks
         PhotonNetwork.ConnectUsingSettings();
         MultiplayerController.instance.ConnectingToServer = true;
         MultiplayerController.instance.ClientConnectedToServer = false;
+    }
+
+    private void CheckIfReadyToStartMatch()
+    {
+        matchFoundPanelObj.SetActive(true);
+
+        matchFoundTimerTMP.text = "MATCH FOUND \n 3";
+
+        if (PhotonNetwork.IsMasterClient)
+        {
+            if (PhotonNetwork.CurrentRoom.PlayerCount == 2)
+            {
+                StartCoroutine(MatchFoundTimer());
+            }
+        }
+    }
+
+    IEnumerator MatchFoundTimer()
+    {
+
+        int currentMatchFoundTime = 3;
+
+        matchFoundTimerTMP.text = "MATCH FOUND \n" + currentMatchFoundTime.ToString();
+
+        while (currentMatchFoundTime > -1)
+        {
+            matchFoundTimerTMP.text = "MATCH FOUND \n" + currentMatchFoundTime.ToString();
+
+            yield return new WaitForSeconds(1f);
+
+            currentMatchFoundTime -= 1;
+
+            object[] data = new object[]
+           {
+            currentMatchFoundTime
+           };
+
+            RaiseEventOptions raiseEventOptions = new RaiseEventOptions
+            {
+                Receivers = ReceiverGroup.Others
+            };
+            SendOptions sendOptions = new SendOptions
+            {
+                Reliability = true
+            };
+
+            PhotonNetwork.RaiseEvent(18, data, raiseEventOptions, sendOptions);
+
+            yield return null;
+        }
+    }
+
+    #endregion
+
+    #region PHOTON
+
+    private void MatchmakingEvents(EventData obj)
+    {
+
+        if (obj.Code == 18)
+        {
+            object[] data = (object[])obj.CustomData;
+
+            int timer = Convert.ToInt32(data[0]);
+
+            matchFoundTimerTMP.text = "MATCH FOUND\n" + timer.ToString();
+        }
+
+        if (obj.Code == 19)
+        {
+            object[] dataState = (object[])obj.CustomData;
+
+            int state = Convert.ToInt32(dataState[0]);
+
+            MultiplayerController.instance.CurrentLobbyState = (MultiplayerController.LobbyState)state;
+        }
     }
 
     #endregion
