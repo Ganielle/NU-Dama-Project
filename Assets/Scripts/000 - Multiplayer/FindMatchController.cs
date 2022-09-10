@@ -147,9 +147,22 @@ public class FindMatchController : MonoBehaviourPunCallbacks
 
         int currentMatchFoundTime = 3;
 
+        object[] data;
+        RaiseEventOptions raiseEventOptions;
+        SendOptions sendOptions;
+
+        raiseEventOptions = new RaiseEventOptions
+        {
+            Receivers = ReceiverGroup.Others
+        };
+        sendOptions = new SendOptions
+        {
+            Reliability = true
+        };
+
         matchFoundTimerTMP.text = "MATCH FOUND \n" + currentMatchFoundTime.ToString();
 
-        while (currentMatchFoundTime > -1)
+        while (currentMatchFoundTime > 0)
         {
             matchFoundTimerTMP.text = "MATCH FOUND \n" + currentMatchFoundTime.ToString();
 
@@ -157,24 +170,25 @@ public class FindMatchController : MonoBehaviourPunCallbacks
 
             currentMatchFoundTime -= 1;
 
-            object[] data = new object[]
-           {
-            currentMatchFoundTime
-           };
-
-            RaiseEventOptions raiseEventOptions = new RaiseEventOptions
+            data = new object[]
             {
-                Receivers = ReceiverGroup.Others
-            };
-            SendOptions sendOptions = new SendOptions
-            {
-                Reliability = true
+                currentMatchFoundTime
             };
 
             PhotonNetwork.RaiseEvent(18, data, raiseEventOptions, sendOptions);
 
             yield return null;
         }
+
+        matchFoundTimerTMP.text = "MATCH FOUND \n" + 0;
+
+        data = new object[] { 0 };
+
+        PhotonNetwork.RaiseEvent(18, data, raiseEventOptions, sendOptions);
+
+        yield return new WaitForSeconds(1f);
+
+        //  CHANGE SCENE
     }
 
     #endregion

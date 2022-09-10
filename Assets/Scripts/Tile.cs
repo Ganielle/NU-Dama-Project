@@ -26,16 +26,16 @@ public class Tile : MonoBehaviour
 
    void Update (){
       if(current){
-         GetComponent<Renderer>().material.color = Color.blue;
+         GetComponent<Renderer>().material.color = UnityEngine.Color.blue;
       }
       else if(target){
-         GetComponent<Renderer>().material.color = Color.red;
+         GetComponent<Renderer>().material.color = UnityEngine.Color.red;
       }
       else if(selectable){
-         GetComponent<Renderer>().material.color = Color.green;
+         GetComponent<Renderer>().material.color = UnityEngine.Color.green;
       }
       else{
-         GetComponent<Renderer>().material.color = Color.white;
+         GetComponent<Renderer>().material.color = UnityEngine.Color.white;
       }
       
    }

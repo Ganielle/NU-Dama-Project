@@ -1564,7 +1564,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 519335426}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: FindMatchController, Assembly-CSharp
         m_MethodName: CancelFindMatchButton
         m_Mode: 1
@@ -1975,17 +1975,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 519335425}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1c229cf3686e18b4a918140366202e34, type: 3}
+  m_Script: {fileID: 11500000, guid: c7982ba13332ff94e8e1457a97b2cb7c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cancelBtn: {fileID: 404826116}
-  findBtn: {fileID: 1028510665}
-  matchFoundPanelObj: {fileID: 129711541}
-  findMatchBtn: {fileID: 1028510667}
-  cancelFindBtn: {fileID: 404826118}
-  timer: {fileID: 498310185}
-  status: {fileID: 939600576}
-  matchFoundTimerTMP: {fileID: 1642568824}
 --- !u!4 &519335427
 Transform:
   m_ObjectHideFlags: 0
@@ -3890,7 +3882,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 519335426}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: FindMatchController, Assembly-CSharp
         m_MethodName: FindMatchButton
         m_Mode: 1
