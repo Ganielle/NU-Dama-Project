@@ -45,21 +45,26 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
         }
         remove { PlayerStatesChange -= value; }
     }
-    public void AddPlayerStates(string key, string value)
+    public void ChangePlayerStates(string key, string value)
     {
         try
         {
             playerStates[key] = value;
+
+            PlayerStatesChange?.Invoke(this, EventArgs.Empty);
         }
         catch (Exception e)
         {
             playerStates.Add(key, value);
         }
-
-        PlayerStatesChange?.Invoke(this, EventArgs.Empty);
     }
+    public void AddPlayerStates(string key, string value) => playerStates.Add(key, value);
 
     //  ========================================
+
+    [Header("CAMERA")]
+    [SerializeField] private GameObject whiteCamObject;
+    [SerializeField] private GameObject blackCamObject;
 
     [Header("TILES")]
     [SerializeField] private Material tileMaterial;
@@ -93,9 +98,13 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
     private void OnEnable()
     {
+        AddPlayerStates("White", "INITIALIZE");
+        AddPlayerStates("Black", "INITIALIZE");
+
         PhotonNetwork.NetworkingClient.EventReceived += MultiplayerEvents;
         OnPlayerStateChange += PlayerStatesChangeEvent;
 
+        SetPlayerControl();
         StartCoroutine(GenerateAllTiles(tileSize, TILE_COUNT_X, TILE_COUNT_Y));
     }
 
@@ -113,7 +122,7 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
         if (obj.Code == 20)
         {
             object[] data = (object[])obj.CustomData;
-            AddPlayerStates(data[0].ToString(), data[1].ToString());
+            ChangePlayerStates(data[0].ToString(), data[1].ToString());
         }
 
         if (obj.Code == 21)
@@ -126,6 +135,18 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
             unitPieces[(int)data[2], (int)data[3]].team = (int)data[1];
             unitPieces[(int)data[2], (int)data[3]].GetComponent<MeshRenderer>().material = teamMaterials[(int)data[1]];
         }
+
+        if (obj.Code == 22)
+        {
+            object[] data = (object[])obj.CustomData;
+
+            playerControl = data[0].ToString();
+
+            if (playerControl == "White")
+                blackCamObject.SetActive(false);
+            else
+                whiteCamObject.SetActive(false);
+        }
     }
 
     #endregion
@@ -134,10 +155,45 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
     private void PlayerStatesChangeEvent(object sender, EventArgs e)
     {
-        throw new NotImplementedException();
+
     }
 
     #region INITIALIZE
+
+    private void SetPlayerControl()
+    {
+        if (PhotonNetwork.IsMasterClient)
+        {
+            object[] data;
+            RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others };
+            SendOptions sendOptions = new SendOptions { Reliability = true };
+
+            int rand = UnityEngine.Random.Range(0, 2);
+
+            if (rand == 0)
+            {
+                playerControl = "White";
+                blackCamObject.SetActive(false);
+
+                data = new object[]
+                {
+                    "Black"
+                };
+            }
+            else
+            {
+                playerControl = "Black";
+                whiteCamObject.SetActive(false);
+
+                data = new object[]
+                {
+                    "White"
+                };
+            }
+
+            PhotonNetwork.RaiseEvent(22, data, raiseEventOptions, sendOptions);
+        }
+    }
 
     IEnumerator GenerateAllTiles(float tileSize, int tileCountX, int tileCountY)
     {
@@ -251,11 +307,29 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
             unitPieces[6, 7] = SpawnSinglePiece(UnitPieceType.BMajorGeneral, blackTeam, 6, 7);
             unitPieces[7, 7] = SpawnSinglePiece(UnitPieceType.BColonel, blackTeam, 7, 7);
         }
+
+        StartCoroutine(PositionAllPieces());
     }
 
     IEnumerator PositionAllPieces()
     {
         //  WAIT TO POPULATE ALL PIECES IN ARRAY BEFORE SORTING
+
+        for (int a = 0; a < TILE_COUNT_X; a++)
+        {
+            for (int b = 0; b < TILE_COUNT_Y; b++)
+            {
+                if (unitPieces[a, b] == null)
+                {
+                    a = 0;
+                    b = 0;
+                }
+
+                yield return null;
+            }
+
+            yield return null;
+        }
 
         for (int x = 0; x < TILE_COUNT_X; x++)
         {
@@ -270,6 +344,18 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
         }
 
         //  DONE INITIALIZING AND READY THE PLAYER UP
+        ChangePlayerStates(playerControl, "READY");
+
+        object[] data;
+        RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others };
+        SendOptions sendOptions = new SendOptions { Reliability = true };
+
+        data = new object[]
+        {
+            playerStates, "READY"
+        };
+
+        PhotonNetwork.RaiseEvent(21, data, raiseEventOptions, sendOptions);
     }
 
     private void PositionSinglePiece(int x, int y, bool force = false)

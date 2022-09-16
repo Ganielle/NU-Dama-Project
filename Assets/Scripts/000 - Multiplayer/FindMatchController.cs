@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class FindMatchController : MonoBehaviourPunCallbacks
@@ -189,6 +190,14 @@ public class FindMatchController : MonoBehaviourPunCallbacks
         yield return new WaitForSeconds(1f);
 
         //  CHANGE SCENE
+
+        data = new object[] { "TheGeneralsMultiplayer" };
+
+
+        PhotonNetwork.RaiseEvent(19, data, raiseEventOptions, sendOptions);
+
+
+        SceneManager.LoadScene("TheGeneralsMultiplayer");
     }
 
     #endregion
@@ -211,9 +220,7 @@ public class FindMatchController : MonoBehaviourPunCallbacks
         {
             object[] dataState = (object[])obj.CustomData;
 
-            int state = Convert.ToInt32(dataState[0]);
-
-            MultiplayerController.instance.CurrentLobbyState = (MultiplayerController.LobbyState)state;
+            SceneManager.LoadScene(dataState[0].ToString());
         }
     }
 
