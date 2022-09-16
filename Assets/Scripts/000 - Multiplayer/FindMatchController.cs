@@ -194,7 +194,7 @@ public class FindMatchController : MonoBehaviourPunCallbacks
         data = new object[] { "TheGeneralsMultiplayer" };
 
 
-        PhotonNetwork.RaiseEvent(19, data, raiseEventOptions, sendOptions);
+        PhotonNetwork.RaiseEvent(17, data, raiseEventOptions, sendOptions);
 
 
         SceneManager.LoadScene("TheGeneralsMultiplayer");
@@ -206,6 +206,12 @@ public class FindMatchController : MonoBehaviourPunCallbacks
 
     private void MatchmakingEvents(EventData obj)
     {
+        if (obj.Code == 17)
+        {
+            object[] dataState = (object[])obj.CustomData;
+
+            SceneManager.LoadScene(dataState[0].ToString());
+        }
 
         if (obj.Code == 18)
         {
@@ -220,7 +226,7 @@ public class FindMatchController : MonoBehaviourPunCallbacks
         {
             object[] dataState = (object[])obj.CustomData;
 
-            SceneManager.LoadScene(dataState[0].ToString());
+            MultiplayerController.instance.CurrentLobbyState = (MultiplayerController.LobbyState)(int)dataState[0];
         }
     }
 
