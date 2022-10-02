@@ -2,6 +2,7 @@ using System.Collections.Specialized;
 using UnityEngine;
 using System;
 using System.Collections.Generic;
+using Photon.Pun;
 
 public enum UnitPieceType{
     None = 0,
@@ -46,18 +47,37 @@ public class UnitPiece : MonoBehaviour
     public int team;
     public int currentX;
     public int currentY;
+    public bool isMultiplayer;
     public UnitPieceType type;
 
     private Vector3 desiredPosition;
     private Vector3 desiredScale = Vector3.one;
+
+    private PhotonView photonView;
+
+    private void OnEnable()
+    {
+        photonView = GetComponent<PhotonView>();
+    }
 
     private void Start(){
         transform.rotation = Quaternion.Euler((team == 0) ? Vector3.zero : new Vector3(0, 180, 0));
     }
 
     private void Update(){
-        transform.position = Vector3.Lerp(transform.position, desiredPosition, Time.deltaTime * 10);
-        transform.localScale = Vector3.Lerp(transform.localScale, desiredScale, Time.deltaTime * 10);
+        if (isMultiplayer)
+        {
+            if (photonView.IsMine)
+            {
+                transform.position = Vector3.Lerp(transform.position, desiredPosition, Time.deltaTime * 10);
+                transform.localScale = Vector3.Lerp(transform.localScale, desiredScale, Time.deltaTime * 10);
+            }
+        }
+        else
+        {
+            transform.position = Vector3.Lerp(transform.position, desiredPosition, Time.deltaTime * 10);
+            transform.localScale = Vector3.Lerp(transform.localScale, desiredScale, Time.deltaTime * 10);
+        }
     }
 
     public virtual List<Vector2Int> GetAvailableMoves(ref UnitPiece[,] board, int tileCountX, int tileCountY){
