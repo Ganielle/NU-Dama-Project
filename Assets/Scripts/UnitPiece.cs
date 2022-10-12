@@ -54,6 +54,12 @@ public class UnitPiece : MonoBehaviour
     private Vector3 desiredScale = Vector3.one;
 
     private PhotonView photonView;
+    public PieceName pieceName;
+
+    private void Awake()
+    {
+        pieceName = transform.Find("PieceName").GetComponent<PieceName>();
+    }
 
     private void OnEnable()
     {
@@ -78,6 +84,19 @@ public class UnitPiece : MonoBehaviour
             transform.position = Vector3.Lerp(transform.position, desiredPosition, Time.deltaTime * 10);
             transform.localScale = Vector3.Lerp(transform.localScale, desiredScale, Time.deltaTime * 10);
         }
+    }
+
+    public void CheckPieceName()
+    {
+        if (isMultiplayer)
+        {
+            if (photonView.IsMine)
+                pieceName.gameObject.SetActive(true);
+            else
+                pieceName.gameObject.SetActive(false);
+        }
+        else
+            pieceName.gameObject.SetActive(false);
     }
 
     public virtual List<Vector2Int> GetAvailableMoves(ref UnitPiece[,] board, int tileCountX, int tileCountY){

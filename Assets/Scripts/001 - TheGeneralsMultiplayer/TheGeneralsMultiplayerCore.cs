@@ -204,6 +204,7 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
             unitPieces[(int)data[2], (int)data[3]].type = (UnitPieceType)Convert.ToInt32(data[0]);
             unitPieces[(int)data[2], (int)data[3]].team = (int)data[1];
             unitPieces[(int)data[2], (int)data[3]].GetComponent<MeshRenderer>().material = teamMaterials[(int)data[1]];
+            unitPieces[(int)data[2], (int)data[3]].CheckPieceName();
         }
 
         if (obj.Code == 22)
@@ -519,8 +520,6 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
         //  DONE INITIALIZING AND READY THE PLAYER UP
         ChangePlayerStates(playerControl, "GAME");
 
-        Debug.Log("wtf");
-
         object[] data;
         RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others };
         SendOptions sendOptions = new SendOptions { Reliability = true };
@@ -537,6 +536,8 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
     {
         UnitPiece up = Instantiate(prefabs[(int)type - 1], transform).GetComponent<UnitPiece>();
 
+        up.pieceName.pieceNameTMP.text = type.ToString();
+
         up.isMultiplayer = true;
 
         PhotonView piecePV = up.gameObject.GetComponent<PhotonView>();
@@ -547,6 +548,7 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
             up.type = type;
             up.team = team;
             up.GetComponent<MeshRenderer>().material = teamMaterials[team];
+            up.CheckPieceName();
 
             RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others };
             SendOptions sendOptions = new SendOptions { Reliability = true };
