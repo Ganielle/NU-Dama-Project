@@ -17,6 +17,6 @@ public class PieceName : MonoBehaviour
     private void Update()
     {
         facingDirection = Quaternion.LookRotation(transform.position - mainCamera.position);
-        transform.rotation = Quaternion.Euler(-facingDirection.x, facingDirection.y, transform.eulerAngles.z);
+        transform.rotation = Quaternion.Euler(facingDirection.eulerAngles.x, transform.eulerAngles.y, transform.eulerAngles.z);
     }
 }

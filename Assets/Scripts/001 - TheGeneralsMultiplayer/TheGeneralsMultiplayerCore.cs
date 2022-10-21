@@ -244,6 +244,11 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
                 unitPieces[(int)data[0], (int)data[1]].SetScale(Vector3.one * deathSize);
                 unitPieces[(int)data[0], (int)data[1]].SetPosition(new Vector3(8 * tileSize, yOffset, -1 * tileSize) - bounds + 
                     new Vector3(tileSize / 1, 0, tileSize / 1) + (Vector3.forward * deathSpacing) * deadWhites.Count);
+
+                if (data[4].ToString() != "")
+                {
+                    deadBlacks.Add(unitPieces[(int)data[5], (int)data[6]]);
+                }
             }
             else
             {
@@ -251,6 +256,11 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
                 unitPieces[(int)data[0], (int)data[1]].SetScale(Vector3.one * deathSize);
                 unitPieces[(int)data[0], (int)data[1]].SetPosition(new Vector3(8 * tileSize, yOffset, -1 * tileSize) - bounds +
                     new Vector3(tileSize / 1, 0, tileSize / 1) + (Vector3.forward * deathSpacing) * deadBlacks.Count);
+
+                if (data[4].ToString() != "")
+                {
+                    deadWhites.Add(unitPieces[(int)data[5], (int)data[6]]);
+                }
             }
 
             if (data[3].ToString() == "")
@@ -722,6 +732,8 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
         RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others };
         SendOptions sendOptions = new SendOptions { Reliability = true };
 
+        string nextTurn; object[] data;
+
         //Is there another piece on the target position?
         if (unitPieces[x, y] != null)
         {
@@ -730,6 +742,11 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
             if (up.team == oup.team)
                 return;
 
+            if (!up.canAttackPieces.Contains(oup.type) && up.type != UnitPieceType.Flag && up.attackType != oup.attackType)
+            {
+                return;
+            }
+
             object[] dataDead;
 
             //If its the enemy team
@@ -737,17 +754,57 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
             {
                 if (oup.type == UnitPieceType.Flag)
                 {
-                    win = "white";
+                    win = "black";
                     winStatusTMP.text = win.ToString().ToUpper() + " TEAM WINS!";
                     winPanelObj.SetActive(true);
                 }
 
-                dataDead = new object[]
+                if (up.type != UnitPieceType.Flag && up.attackType == oup.attackType)
                 {
-                    x, y, "white", win
-                };
+                    dataDead = new object[]
+                    {
+                        x, y, "white", win, "black", oup.currentX, oup.currentY
+                    };
+
+                    deadBlacks.Add(up);
+                    deadWhites.Add(oup);
+
+                    up.SetScale(Vector3.one * deathSize);
+                    up.SetPosition(new Vector3(-1 * tileSize, yOffset, 7 * tileSize) - bounds + new Vector3(tileSize / 1, 0, tileSize / 1) + (Vector3.back * deathSpacing) * deadBlacks.Count);
+
+                    PhotonNetwork.RaiseEvent(24, dataDead, raiseEventOptions, sendOptions);
+
+                    if (playerControl == "White")
+                        nextTurn = "Black";
+                    else
+                        nextTurn = "White";
+
+                    data = new object[]
+                    {
+                        nextTurn, x, y, previousPosition.x, previousPosition.y, originalX, originalY
+                    };
+
+                    PhotonNetwork.RaiseEvent(23, data, raiseEventOptions, sendOptions);
+
+                    CanNowAttack = false;
+                    StartCoroutine(NextTurn(nextTurn));
+
+                    if (currentlyDragging)
+                        currentlyDragging = null;
+                    RemoveHighlightTiles();
+
+                    return;
+                }
+                else
+                {
+                    dataDead = new object[]
+                    {
+                        x, y, "white", win, ""
+                    };
+                }
 
                 deadWhites.Add(oup);
+
                 //oup.SetScale(Vector3.one * deathSize);
                 //oup.SetPosition(new Vector3(8 * tileSize, yOffset, -1 * tileSize) - bounds + new Vector3(tileSize / 1, 0, tileSize / 1) + (Vector3.forward * deathSpacing) * deadWhites.Count);
             }
@@ -755,17 +812,56 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
             {
                 if (oup.type == UnitPieceType.BFlag)
                 {
-                    win = "black";
+                    win = "white";
                     winStatusTMP.text = win.ToString().ToUpper() + " TEAM WINS!";
                     winPanelObj.SetActive(true);
                 }
 
-                dataDead = new object[]
+                if (up.type != UnitPieceType.Flag && up.attackType == oup.attackType)
                 {
-                    x, y, "black", win
-                };
+                    dataDead = new object[]
+                    {
+                        x, y, "black", win, "white", oup.currentX, oup.currentY
+                    };
 
-                //deadBlacks.Add(oup);
+                    deadBlacks.Add(oup);
+                    deadWhites.Add(up);
+
+                    up.SetScale(Vector3.one * deathSize);
+                    up.SetPosition(new Vector3(8 * tileSize, yOffset, -1 * tileSize) - bounds + new Vector3(tileSize / 1, 0, tileSize / 1) + (Vector3.forward * deathSpacing) * deadWhites.Count);
+
+                    PhotonNetwork.RaiseEvent(24, dataDead, raiseEventOptions, sendOptions);
+
+                    if (playerControl == "White")
+                        nextTurn = "Black";
+                    else
+                        nextTurn = "White";
+
+                    data = new object[]
+                    {
+                        nextTurn, x, y, previousPosition.x, previousPosition.y, originalX, originalY
+                    };
+
+                    PhotonNetwork.RaiseEvent(23, data, raiseEventOptions, sendOptions);
+
+                    CanNowAttack = false;
+                    StartCoroutine(NextTurn(nextTurn));
+
+                    if (currentlyDragging)
+                        currentlyDragging = null;
+                    RemoveHighlightTiles();
+
+                    return;
+                }
+                else
+                {
+                    dataDead = new object[]
+                    {
+                        x, y, "black", win, ""
+                    };
+                }
+
+                deadBlacks.Add(oup);
                 //oup.SetScale(Vector3.one * deathSize);
                 //oup.SetPosition(new Vector3(-1 * tileSize, yOffset, 7 * tileSize) - bounds + new Vector3(tileSize / 1, 0, tileSize / 1) + (Vector3.back * deathSpacing) * deadBlacks.Count);
             }
@@ -778,14 +874,10 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
         PositionSinglePiece(x, y);
 
-        string nextTurn;
-
         if (playerControl == "White")
             nextTurn = "Black";
         else
             nextTurn = "White";
-
-        object[] data;
 
         data = new object[]
         {

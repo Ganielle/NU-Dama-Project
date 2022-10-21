@@ -49,17 +49,14 @@ public class UnitPiece : MonoBehaviour
     public int currentY;
     public bool isMultiplayer;
     public UnitPieceType type;
+    public UnitPieceType attackType;
+    public List<UnitPieceType> canAttackPieces;
 
     private Vector3 desiredPosition;
     private Vector3 desiredScale = Vector3.one;
 
     private PhotonView photonView;
     public PieceName pieceName;
-
-    private void Awake()
-    {
-        pieceName = transform.Find("PieceName").GetComponent<PieceName>();
-    }
 
     private void OnEnable()
     {
@@ -88,6 +85,12 @@ public class UnitPiece : MonoBehaviour
 
     public void CheckPieceName()
     {
+        if (pieceName == null)
+        {
+            Debug.Log("hello");
+            return;
+        }
+
         if (isMultiplayer)
         {
             if (photonView.IsMine)
