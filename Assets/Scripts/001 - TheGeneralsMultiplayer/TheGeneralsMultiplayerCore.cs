@@ -8,6 +8,7 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class TheGeneralsMultiplayerCore : MonoBehaviour
 {
@@ -91,6 +92,7 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
     [Header("NEXT ATTACKER STATE")]
     [SerializeField] private GameObject attackerStateObj;
     [SerializeField] private TextMeshProUGUI attackerState;
+    [SerializeField] private GameObject doneTacticsBtn;
 
     [Header("TILES")]
     [SerializeField] private Material tileMaterial;
@@ -140,11 +142,6 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
     Coroutine loadingStatus;
 
     //  ========================================
-
-    //  DO:
-    //  -INSTANTIATION FINAL
-    //  -PLAYER TURN FIRST
-    //  -CHECK CURRENT PLAYER TURN
 
     private void OnEnable()
     {
@@ -223,6 +220,8 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
         {
             object[] data = (object[])obj.CustomData;
 
+            StartCoroutine(NextTurn(data[0].ToString()));
+
             if (data.Length > 1)
             {
                 unitPieces[(int)data[1], (int)data[2]] = unitPieces[(int)data[5], (int)data[6]];
@@ -230,8 +229,6 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
                 unitPieces[(int)data[1], (int)data[2]].currentX = (int)data[1];
                 unitPieces[(int)data[1], (int)data[2]].currentY = (int)data[2];
             }
-
-            StartCoroutine(NextTurn(data[0].ToString()));
         }
 
         if (obj.Code == 24)
@@ -277,15 +274,18 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
     private void PlayerStatesChangeEvent(object sender, EventArgs e)
     {
-        CheckPlayerStates();
+        CheckIfDoneInitialize();
+        SetFirstTurn();
     }
 
     #region INITIALIZE
 
-    private void CheckPlayerStates()
+    private void CheckIfDoneInitialize()
     {
-        if (playerStates["White"] == "INITIALIZE" || playerStates["Black"] == "INITIALIZE")
+        if (playerStates["White"] != "TACTICS" || playerStates["Black"] != "TACTICS")
             return;
+
+        CanNowAttack = false;
 
         loadingObj.SetActive(false);
 
@@ -294,6 +294,27 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
             StopCoroutine(loadingStatus);
             loadingStatus = null;
         }
+
+        StartCoroutine(TacticsTime());
+
+        doneTacticsBtn.SetActive(true);
+    }
+    private IEnumerator TacticsTime()
+    {
+        attackerStateObj.SetActive(false);
+        attackerState.text = "TACTICS TIME";
+        attackerStateObj.SetActive(true);
+
+        while (!CanNowAttack) yield return null;
+
+        attackerState.text = "";
+        attackerStateObj.SetActive(false);
+    }
+
+    private void SetFirstTurn()
+    {
+        if (playerStates["White"] != "GAME" || playerStates["Black"] != "GAME")
+            return;
 
         CurrentGameState = GameState.GAME;
 
@@ -379,6 +400,8 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
         Mesh mesh = new Mesh();
         tileObject.AddComponent<MeshFilter>().mesh = mesh;
         tileObject.AddComponent<MeshRenderer>().material = tileMaterial;
+        //tileObject.AddComponent<TileController>().xPos = x;
+        //tileObject.AddComponent<TileController>().yPos = y;
 
         Vector3[] vertices = new Vector3[4];
         vertices[0] = new Vector3(x * tileSize, yOffset, y * tileSize) - bounds;
@@ -470,6 +493,28 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
         return new Vector3(x * tileSize, yOffset, y * tileSize) - bounds + new Vector3(tileSize / 2, 0, tileSize / 2);
     }
 
+    public void DoneTactics()
+    {
+        if (!CanNowAttack)
+            return;
+
+        doneTacticsBtn.SetActive(false);
+
+        //  DONE INITIALIZING AND READY THE PLAYER UP
+        ChangePlayerStates(playerControl, "GAME");
+
+        object[] data;
+        RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others };
+        SendOptions sendOptions = new SendOptions { Reliability = true };
+
+        data = new object[]
+        {
+            playerControl, "GAME"
+        };
+
+        PhotonNetwork.RaiseEvent(20, data, raiseEventOptions, sendOptions);
+    }
+
     #region NETWORK
 
     private void SetPlayerControl()
@@ -527,8 +572,8 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
             yield return null;
         }
 
-        //  DONE INITIALIZING AND READY THE PLAYER UP
-        ChangePlayerStates(playerControl, "GAME");
+        //  DONE INITIALIZING AND READY THE PLAYER UP FOR TACTICS
+        ChangePlayerStates(playerControl, "TACTICS");
 
         object[] data;
         RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others };
@@ -536,7 +581,7 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
         data = new object[]
         {
-            playerControl, "GAME"
+            playerControl, "TACTICS"
         };
 
         PhotonNetwork.RaiseEvent(20, data, raiseEventOptions, sendOptions);
@@ -587,6 +632,8 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
     private IEnumerator NextTurn(string currentTurn)
     {
+        CanNowAttack = false;
+        attackerStateObj.SetActive(false);
         CurrentTurn = currentTurn;
         attackerState.text = currentTurn.ToUpper() + "'S TURN";
         attackerStateObj.SetActive(true);
@@ -599,94 +646,191 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
     private void MoveCharacter()
     {
-        if (CurrentTurn != playerControl || !CanNowAttack || CurrentGameState != GameState.GAME )
-        {
-            RemoveHighlightTiles();
-            return;
-        }
-
         ray = currentCamera.ScreenPointToRay(Input.mousePosition);
 
-        if (Physics.Raycast(ray, out info, 100, LayerMask.GetMask("Tile", "Hover", "Highlight")))
+        if (CurrentGameState == GameState.READY)
         {
-
-            //Get the indexes of the tile i've hit
-            Vector2Int hitPosition = LookupTileIndex(info.transform.gameObject);
-
-            //If we're hovering a tile after not hovering any tiles
-            if (currentHover == -Vector2Int.one)
+            if (Physics.Raycast(ray, out info, 100, LayerMask.GetMask("Tile", "Hover", "Highlight")))
             {
-                currentHover = hitPosition;
-                tiles[hitPosition.x, hitPosition.y].layer = LayerMask.NameToLayer("Hover");
-            }
+                //Get the indexes of the tile i've hit
+                Vector2Int hitPosition = LookupTileIndex(info.transform.gameObject);
 
-            //If we were already hovering a tile, change the previous one
-            if (currentHover != hitPosition)
-            {
-                tiles[currentHover.x, currentHover.y].layer = (ContainsValidMove(ref availableMoves, currentHover)) ? LayerMask.NameToLayer("Highlight") : LayerMask.NameToLayer("Tile");
-                currentHover = hitPosition;
-                tiles[hitPosition.x, hitPosition.y].layer = LayerMask.NameToLayer("Hover");
-            }
-            //If we press down on the mouse
-            if (Input.GetMouseButtonDown(0))
-            {
-                if (unitPieces[hitPosition.x, hitPosition.y] != null)
+                //If we're hovering a tile after not hovering any tiles
+                if (currentHover == -Vector2Int.one)
                 {
-                    if (playerControl == "White" && unitPieces[hitPosition.x, hitPosition.y].team != 0)
+                    currentHover = hitPosition;
+                    tiles[hitPosition.x, hitPosition.y].layer = LayerMask.NameToLayer("Hover");
+                }
+                //If we were already hovering a tile, change the previous one
+                if (currentHover != hitPosition)
+                {
+                    tiles[currentHover.x, currentHover.y].layer = (ContainsValidMove(ref availableMoves, currentHover)) ? LayerMask.NameToLayer("Highlight") : LayerMask.NameToLayer("Tile");
+                    currentHover = hitPosition;
+                    tiles[hitPosition.x, hitPosition.y].layer = LayerMask.NameToLayer("Hover");
+                }
+                //If we press down on the mouse
+                if (Input.GetMouseButtonDown(0))
+                {
+                    if (unitPieces[hitPosition.x, hitPosition.y] != null)
+                    {
+                        if (playerControl == "White" && unitPieces[hitPosition.x, hitPosition.y].team != 0)
+                            return;
+
+                        else if (playerControl == "Black" && unitPieces[hitPosition.x, hitPosition.y].team != 1)
+                            return;
+
+                        currentlyDragging = unitPieces[hitPosition.x, hitPosition.y];
+
+                        //Get a list of where I can go, highlight tiles as well
+                        availableMoves = currentlyDragging.GetAvailableMoves(ref unitPieces, TILE_COUNT_X, TILE_COUNT_Y);
+                        HighlightTiles();
+                    }
+                }
+
+                //If we are releasing the mouse button
+                if (currentlyDragging != null && Input.GetMouseButtonUp(0))
+                {
+                    Vector2Int previousPosition = new Vector2Int(currentlyDragging.currentX, currentlyDragging.currentY);
+
+                    if (playerControl == "White" && hitPosition.y >= 3)
+                    {
+                        currentlyDragging.SetPosition(GetTileCenter(previousPosition.x, previousPosition.y));
+                        currentlyDragging = null;
+                        RemoveHighlightTiles();
                         return;
+                    }
 
-                    else if (playerControl == "Black" && unitPieces[hitPosition.x, hitPosition.y].team != 1)
+                    else if (playerControl == "Black" && hitPosition.y <= 4)
+                    {
+                        currentlyDragging.SetPosition(GetTileCenter(previousPosition.x, previousPosition.y));
+                        currentlyDragging = null;
+                        RemoveHighlightTiles();
                         return;
+                    }
 
-                    currentlyDragging = unitPieces[hitPosition.x, hitPosition.y];
-
-                    //Get a list of where I can go, highlight tiles as well
-                    availableMoves = currentlyDragging.GetAvailableMoves(ref unitPieces, TILE_COUNT_X, TILE_COUNT_Y);
-                    HighlightTiles();
+                    if (ContainsValidMove(ref availableMoves, new Vector2(hitPosition.x, hitPosition.y)))
+                    {
+                        MoveTo(previousPosition.x, previousPosition.y, hitPosition.x, hitPosition.y);
+                    }
+                    else
+                    {
+                        currentlyDragging.SetPosition(GetTileCenter(previousPosition.x, previousPosition.y));
+                        currentlyDragging = null;
+                        RemoveHighlightTiles();
+                    }
                 }
             }
-
-            //If we are releasing the mouse button
-            if (currentlyDragging != null && Input.GetMouseButtonUp(0))
+            else
             {
-                Vector2Int previousPosition = new Vector2Int(currentlyDragging.currentX, currentlyDragging.currentY);
-                if (ContainsValidMove(ref availableMoves, new Vector2(hitPosition.x, hitPosition.y)))
+                if (currentlyDragging && Input.GetMouseButtonUp(0))
                 {
-                    MoveTo(previousPosition.x, previousPosition.y, hitPosition.x, hitPosition.y);
-                }
-                else
-                {
-                    currentlyDragging.SetPosition(GetTileCenter(previousPosition.x, previousPosition.y));
+                    currentlyDragging.SetPosition(GetTileCenter(currentlyDragging.currentX, currentlyDragging.currentY));
                     currentlyDragging = null;
                     RemoveHighlightTiles();
                 }
             }
 
+            //If we're dragging a piece
+            if (currentlyDragging)
+            {
+                Plane horizontalPlane = new Plane(Vector3.up, Vector3.up * yOffset);
+                float distance = 0.0f;
+                if (horizontalPlane.Raycast(ray, out distance))
+                    currentlyDragging.SetPosition(ray.GetPoint(distance) + Vector3.up * dragOffset);
+            }
         }
+        else if (CurrentGameState == GameState.GAME)
+        {
+            if (CurrentTurn != playerControl || !CanNowAttack)
+            {
+                RemoveHighlightTiles();
+                return;
+            }
 
+            if (Physics.Raycast(ray, out info, 100, LayerMask.GetMask("Tile", "Hover", "Highlight")))
+            {
+
+                //Get the indexes of the tile i've hit
+                Vector2Int hitPosition = LookupTileIndex(info.transform.gameObject);
+
+                //If we're hovering a tile after not hovering any tiles
+                if (currentHover == -Vector2Int.one)
+                {
+                    currentHover = hitPosition;
+                    tiles[hitPosition.x, hitPosition.y].layer = LayerMask.NameToLayer("Hover");
+                }
+
+                //If we were already hovering a tile, change the previous one
+                if (currentHover != hitPosition)
+                {
+                    tiles[currentHover.x, currentHover.y].layer = (ContainsValidMove(ref availableMoves, currentHover)) ? LayerMask.NameToLayer("Highlight") : LayerMask.NameToLayer("Tile");
+                    currentHover = hitPosition;
+                    tiles[hitPosition.x, hitPosition.y].layer = LayerMask.NameToLayer("Hover");
+                }
+                //If we press down on the mouse
+                if (Input.GetMouseButtonDown(0))
+                {
+                    if (unitPieces[hitPosition.x, hitPosition.y] != null)
+                    {
+                        if (playerControl == "White" && unitPieces[hitPosition.x, hitPosition.y].team != 0)
+                            return;
+
+                        else if (playerControl == "Black" && unitPieces[hitPosition.x, hitPosition.y].team != 1)
+                            return;
+
+                        currentlyDragging = unitPieces[hitPosition.x, hitPosition.y];
+
+                        //Get a list of where I can go, highlight tiles as well
+                        availableMoves = currentlyDragging.GetAvailableMoves(ref unitPieces, TILE_COUNT_X, TILE_COUNT_Y);
+                        HighlightTiles();
+                    }
+                }
+
+                //If we are releasing the mouse button
+                if (currentlyDragging != null && Input.GetMouseButtonUp(0))
+                {
+                    Vector2Int previousPosition = new Vector2Int(currentlyDragging.currentX, currentlyDragging.currentY);
+                    if (ContainsValidMove(ref availableMoves, new Vector2(hitPosition.x, hitPosition.y)))
+                    {
+                        MoveTo(previousPosition.x, previousPosition.y, hitPosition.x, hitPosition.y);
+                    }
+                    else
+                    {
+                        currentlyDragging.SetPosition(GetTileCenter(previousPosition.x, previousPosition.y));
+                        currentlyDragging = null;
+                        RemoveHighlightTiles();
+                    }
+                }
+
+            }
+            else
+            {
+                if (currentHover != -Vector2Int.one)
+                {
+                    tiles[currentHover.x, currentHover.y].layer = (ContainsValidMove(ref availableMoves, currentHover)) ? LayerMask.NameToLayer("Highlight") : LayerMask.NameToLayer("Tile");
+                    currentHover = -Vector2Int.one;
+                }
+
+                if (currentlyDragging && Input.GetMouseButtonUp(0))
+                {
+                    currentlyDragging.SetPosition(GetTileCenter(currentlyDragging.currentX, currentlyDragging.currentY));
+                    currentlyDragging = null;
+                    RemoveHighlightTiles();
+                }
+            }
+
+            //If we're dragging a piece
+            if (currentlyDragging)
+            {
+                Plane horizontalPlane = new Plane(Vector3.up, Vector3.up * yOffset);
+                float distance = 0.0f;
+                if (horizontalPlane.Raycast(ray, out distance))
+                    currentlyDragging.SetPosition(ray.GetPoint(distance) + Vector3.up * dragOffset);
+            }
+        }
         else
         {
-            if (currentHover != -Vector2Int.one)
-            {
-                tiles[currentHover.x, currentHover.y].layer = (ContainsValidMove(ref availableMoves, currentHover)) ? LayerMask.NameToLayer("Highlight") : LayerMask.NameToLayer("Tile");
-                currentHover = -Vector2Int.one;
-            }
-
-            if (currentlyDragging && Input.GetMouseButtonUp(0))
-            {
-                currentlyDragging.SetPosition(GetTileCenter(currentlyDragging.currentX, currentlyDragging.currentY));
-                currentlyDragging = null;
-                RemoveHighlightTiles();
-            }
-        }
-
-        //If we're dragging a piece
-        if (currentlyDragging)
-        {
-            Plane horizontalPlane = new Plane(Vector3.up, Vector3.up * yOffset);
-            float distance = 0.0f;
-            if (horizontalPlane.Raycast(ray, out distance))
-                currentlyDragging.SetPosition(ray.GetPoint(distance) + Vector3.up * dragOffset);
+            RemoveHighlightTiles();
         }
     }
 
