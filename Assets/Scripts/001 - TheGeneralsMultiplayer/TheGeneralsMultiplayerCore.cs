@@ -132,12 +132,14 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
     RaycastHit info;
     Ray ray;
-    private bool canAttack;
+    public bool canAttack;
     private Vector2Int currentHover;
     private List<Vector2Int> availableMoves = new List<Vector2Int>();
     private UnitPiece currentlyDragging;
     private List<UnitPiece> deadWhites = new List<UnitPiece>();
     private List<UnitPiece> deadBlacks = new List<UnitPiece>();
+
+    private bool doneOtherPlayerTiles;
 
     Coroutine loadingStatus;
 
@@ -210,6 +212,8 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
             playerControl = data[0].ToString();
 
+            Debug.Log(playerControl);
+
             if (playerControl == "White")
                 blackCamObject.SetActive(false);
             else
@@ -220,7 +224,8 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
         {
             object[] data = (object[])obj.CustomData;
 
-            StartCoroutine(NextTurn(data[0].ToString()));
+            if (CurrentGameState == GameState.GAME)
+                StartCoroutine(NextTurn(data[0].ToString()));
 
             if (data.Length > 1)
             {
@@ -265,6 +270,13 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
             winStatusTMP.text = data[3].ToString().ToUpper() + " TEAM WINS!";
             winPanelObj.SetActive(true);
+        }
+
+        if (obj.Code == 25)
+        {
+            object[] data = (object[])obj.CustomData;
+
+            doneOtherPlayerTiles = (bool)data[0];
         }
     }
 
@@ -365,6 +377,7 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
     {
         while (playerControl == "")
         {
+            Debug.Log("no control yet");
             yield return null;
         }
 
@@ -386,6 +399,19 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
             yield return null;
         }
+
+        object[] data;
+        RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others };
+        SendOptions sendOptions = new SendOptions { Reliability = true };
+
+        data = new object[]
+        {
+            true
+        };
+
+        PhotonNetwork.RaiseEvent(25, data, raiseEventOptions, sendOptions);
+
+        while (!doneOtherPlayerTiles) yield return null;
 
         //  AFTER SPAWNING TILES, SPAWN THE PIECES AND
         //  SEND IT ON NETWORK FOR ALL THE PLAYERS TO RECEIVE
@@ -931,7 +957,9 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
                     PhotonNetwork.RaiseEvent(23, data, raiseEventOptions, sendOptions);
 
                     CanNowAttack = false;
-                    StartCoroutine(NextTurn(nextTurn));
+
+                    if (CurrentGameState == GameState.GAME)
+                        StartCoroutine(NextTurn(nextTurn));
 
                     if (currentlyDragging)
                         currentlyDragging = null;
@@ -989,7 +1017,8 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
                     PhotonNetwork.RaiseEvent(23, data, raiseEventOptions, sendOptions);
 
                     CanNowAttack = false;
-                    StartCoroutine(NextTurn(nextTurn));
+                    if (CurrentGameState == GameState.GAME)
+                        StartCoroutine(NextTurn(nextTurn));
 
                     if (currentlyDragging)
                         currentlyDragging = null;
@@ -1031,7 +1060,8 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
         PhotonNetwork.RaiseEvent(23, data, raiseEventOptions, sendOptions);
 
         CanNowAttack = false;
-        StartCoroutine(NextTurn(nextTurn));
+        if (CurrentGameState == GameState.GAME)
+            StartCoroutine(NextTurn(nextTurn));
 
         if (currentlyDragging)
             currentlyDragging = null;
