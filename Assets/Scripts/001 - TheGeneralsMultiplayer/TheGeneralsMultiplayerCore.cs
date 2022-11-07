@@ -341,7 +341,9 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
             else
                 nextTurn = "Black";
 
-            RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others };
+            RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others,
+            CachingOption = EventCaching.AddToRoomCache
+            };
             SendOptions sendOptions = new SendOptions { Reliability = true };
             dataCurrentTurn = new object[]
             {
@@ -377,7 +379,7 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
     {
         while (playerControl == "")
         {
-            Debug.Log("no control yet");
+            Debug.Log("there's no player control yet");
             yield return null;
         }
 
@@ -401,7 +403,8 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
         }
 
         object[] data;
-        RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others };
+        RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others, 
+            CachingOption = EventCaching.AddToRoomCache };
         SendOptions sendOptions = new SendOptions { Reliability = true };
 
         data = new object[]
@@ -426,8 +429,10 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
         Mesh mesh = new Mesh();
         tileObject.AddComponent<MeshFilter>().mesh = mesh;
         tileObject.AddComponent<MeshRenderer>().material = tileMaterial;
-        //tileObject.AddComponent<TileController>().xPos = x;
-        //tileObject.AddComponent<TileController>().yPos = y;
+
+        TileController tileController = tileObject.AddComponent<TileController>();
+        tileController.xPos = x;
+        tileController.yPos = y;
 
         Vector3[] vertices = new Vector3[4];
         vertices[0] = new Vector3(x * tileSize, yOffset, y * tileSize) - bounds;
@@ -530,7 +535,9 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
         ChangePlayerStates(playerControl, "GAME");
 
         object[] data;
-        RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others };
+        RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others,
+            CachingOption = EventCaching.AddToRoomCache
+        };
         SendOptions sendOptions = new SendOptions { Reliability = true };
 
         data = new object[]
@@ -548,7 +555,9 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
         if (PhotonNetwork.IsMasterClient)
         {
             object[] data;
-            RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others };
+            RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others,
+            CachingOption = EventCaching.AddToRoomCache
+            };
             SendOptions sendOptions = new SendOptions { Reliability = true };
 
             int rand = UnityEngine.Random.Range(0, 2);
@@ -602,7 +611,9 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
         ChangePlayerStates(playerControl, "TACTICS");
 
         object[] data;
-        RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others };
+        RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others,
+            CachingOption = EventCaching.AddToRoomCache
+        };
         SendOptions sendOptions = new SendOptions { Reliability = true };
 
         data = new object[]
@@ -631,7 +642,9 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
             up.GetComponent<MeshRenderer>().material = teamMaterials[team];
             up.CheckPieceName();
 
-            RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others };
+            RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others,
+            CachingOption = EventCaching.AddToRoomCache
+            };
             SendOptions sendOptions = new SendOptions { Reliability = true };
 
             data = new object[]
@@ -674,8 +687,11 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
     {
         ray = currentCamera.ScreenPointToRay(Input.mousePosition);
 
-        if (CurrentGameState == GameState.READY)
+        if (CurrentGameState == GameState.READY && playerStates.ContainsKey(playerControl))
         {
+            if (playerStates[playerControl] != "TACTICS")
+                return;
+
             if (Physics.Raycast(ray, out info, 100, LayerMask.GetMask("Tile", "Hover", "Highlight")))
             {
                 //Get the indexes of the tile i've hit
@@ -718,7 +734,7 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
                 {
                     Vector2Int previousPosition = new Vector2Int(currentlyDragging.currentX, currentlyDragging.currentY);
 
-                    if (playerControl == "White" && hitPosition.y >= 3)
+                    if (playerControl == "White" && info.transform.GetComponent<TileController>().yPos >= 3)
                     {
                         currentlyDragging.SetPosition(GetTileCenter(previousPosition.x, previousPosition.y));
                         currentlyDragging = null;
@@ -726,7 +742,7 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
                         return;
                     }
 
-                    else if (playerControl == "Black" && hitPosition.y <= 4)
+                    else if (playerControl == "Black" && info.transform.GetComponent<TileController>().yPos <= 4)
                     {
                         currentlyDragging.SetPosition(GetTileCenter(previousPosition.x, previousPosition.y));
                         currentlyDragging = null;
@@ -899,7 +915,9 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
         UnitPiece up = unitPieces[originalX, originalY];
         Vector2Int previousPosition = new Vector2Int(originalX, originalY);
 
-        RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others };
+        RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others,
+            CachingOption = EventCaching.AddToRoomCache
+        };
         SendOptions sendOptions = new SendOptions { Reliability = true };
 
         string nextTurn; object[] data;
@@ -956,10 +974,12 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
                     PhotonNetwork.RaiseEvent(23, data, raiseEventOptions, sendOptions);
 
-                    CanNowAttack = false;
 
                     if (CurrentGameState == GameState.GAME)
+                    {
+                        CanNowAttack = false;
                         StartCoroutine(NextTurn(nextTurn));
+                    }
 
                     if (currentlyDragging)
                         currentlyDragging = null;
@@ -1016,9 +1036,11 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
                     PhotonNetwork.RaiseEvent(23, data, raiseEventOptions, sendOptions);
 
-                    CanNowAttack = false;
                     if (CurrentGameState == GameState.GAME)
+                    {
+                        CanNowAttack = false;
                         StartCoroutine(NextTurn(nextTurn));
+                    }
 
                     if (currentlyDragging)
                         currentlyDragging = null;
@@ -1059,9 +1081,11 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
         PhotonNetwork.RaiseEvent(23, data, raiseEventOptions, sendOptions);
 
-        CanNowAttack = false;
         if (CurrentGameState == GameState.GAME)
+        {
+            CanNowAttack = false;
             StartCoroutine(NextTurn(nextTurn));
+        }
 
         if (currentlyDragging)
             currentlyDragging = null;

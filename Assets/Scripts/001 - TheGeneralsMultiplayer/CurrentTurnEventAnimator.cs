@@ -6,5 +6,9 @@ public class CurrentTurnEventAnimator : MonoBehaviour
 {
     public TheGeneralsMultiplayerCore multiplayerCore;
 
-    public void CanAttack() => multiplayerCore.CanNowAttack = true;
+    public void CanAttack()
+    {
+        Debug.Log("hellooooo");
+        multiplayerCore.CanNowAttack = true;
+    }
 }
