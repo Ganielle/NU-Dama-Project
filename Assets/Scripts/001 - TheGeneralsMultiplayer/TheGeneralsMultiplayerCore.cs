@@ -156,7 +156,6 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
         OnPlayerStateChange += PlayerStatesChangeEvent;
 
         SetPlayerControl();
-        StartCoroutine(GenerateAllTiles(tileSize, TILE_COUNT_X, TILE_COUNT_Y));
     }
 
     private void OnDisable()
@@ -212,12 +211,13 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
             playerControl = data[0].ToString();
 
-            Debug.Log(playerControl);
-
             if (playerControl == "White")
                 blackCamObject.SetActive(false);
             else
                 whiteCamObject.SetActive(false);
+
+            if (playerControl != "")
+                StartCoroutine(GenerateAllTiles(tileSize, TILE_COUNT_X, TILE_COUNT_Y));
         }
 
         if (obj.Code == 23)
@@ -584,6 +584,8 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
             }
 
             PhotonNetwork.RaiseEvent(22, data, raiseEventOptions, sendOptions);
+
+            StartCoroutine(GenerateAllTiles(tileSize, TILE_COUNT_X, TILE_COUNT_Y));
         }
     }
 
@@ -930,11 +932,6 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
             if (up.team == oup.team)
                 return;
 
-            if (!up.canAttackPieces.Contains(oup.type) && up.type != UnitPieceType.Flag && up.attackType != oup.attackType)
-            {
-                return;
-            }
-
             object[] dataDead;
 
             //If its the enemy team
@@ -974,6 +971,46 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
                     PhotonNetwork.RaiseEvent(23, data, raiseEventOptions, sendOptions);
 
+                    if (CurrentGameState == GameState.GAME)
+                    {
+                        CanNowAttack = false;
+                        StartCoroutine(NextTurn(nextTurn));
+                    }
+
+                    if (currentlyDragging)
+                        currentlyDragging = null;
+                    RemoveHighlightTiles();
+
+                    return;
+                }
+                else if (up.type != UnitPieceType.Flag
+                    && !up.canAttackPieces.Contains(oup.type)
+                    && up.type != UnitPieceType.Flag
+                    && up.attackType != oup.attackType)
+                {
+                    Debug.Log("wtf");
+                    dataDead = new object[]
+                    {
+                        x, y, "black", win, ""
+                    };
+
+                    deadBlacks.Add(up);
+                    up.SetScale(Vector3.one * deathSize);
+                    up.SetPosition(new Vector3(-1 * tileSize, yOffset, 7 * tileSize) - bounds + new Vector3(tileSize / 1, 0, tileSize / 1) + (Vector3.back * deathSpacing) * deadBlacks.Count);
+
+                    PhotonNetwork.RaiseEvent(24, dataDead, raiseEventOptions, sendOptions);
+
+                    if (playerControl == "White")
+                        nextTurn = "Black";
+                    else
+                        nextTurn = "White";
+
+                    data = new object[]
+                    {
+                        nextTurn, x, y, previousPosition.x, previousPosition.y, originalX, originalY
+                    };
+
+                    PhotonNetwork.RaiseEvent(23, data, raiseEventOptions, sendOptions);
 
                     if (CurrentGameState == GameState.GAME)
                     {
@@ -984,6 +1021,7 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
                     if (currentlyDragging)
                         currentlyDragging = null;
                     RemoveHighlightTiles();
+
 
                     return;
                 }
@@ -1019,6 +1057,48 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
                     deadBlacks.Add(oup);
                     deadWhites.Add(up);
 
+                    up.SetScale(Vector3.one * deathSize);
+                    up.SetPosition(new Vector3(8 * tileSize, yOffset, -1 * tileSize) - bounds + new Vector3(tileSize / 1, 0, tileSize / 1) + (Vector3.forward * deathSpacing) * deadWhites.Count);
+
+                    PhotonNetwork.RaiseEvent(24, dataDead, raiseEventOptions, sendOptions);
+
+                    if (playerControl == "White")
+                        nextTurn = "Black";
+                    else
+                        nextTurn = "White";
+
+                    data = new object[]
+                    {
+                        nextTurn, x, y, previousPosition.x, previousPosition.y, originalX, originalY
+                    };
+
+                    PhotonNetwork.RaiseEvent(23, data, raiseEventOptions, sendOptions);
+
+                    if (CurrentGameState == GameState.GAME)
+                    {
+                        CanNowAttack = false;
+                        StartCoroutine(NextTurn(nextTurn));
+                    }
+
+                    if (currentlyDragging)
+                        currentlyDragging = null;
+                    RemoveHighlightTiles();
+
+                    return;
+                }
+                else if (up.type != UnitPieceType.Flag
+                    && !up.canAttackPieces.Contains(oup.type)
+                    && up.type != UnitPieceType.Flag
+                    && up.attackType != oup.attackType)
+                {
+
+                    Debug.Log("wtf2");
+                    dataDead = new object[]
+                    {
+                        x, y, "white", win, ""
+                    };
+
+                    deadWhites.Add(up);
                     up.SetScale(Vector3.one * deathSize);
                     up.SetPosition(new Vector3(8 * tileSize, yOffset, -1 * tileSize) - bounds + new Vector3(tileSize / 1, 0, tileSize / 1) + (Vector3.forward * deathSpacing) * deadWhites.Count);
 
