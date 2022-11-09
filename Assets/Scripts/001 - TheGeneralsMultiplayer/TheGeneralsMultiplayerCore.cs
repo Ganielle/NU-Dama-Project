@@ -934,6 +934,9 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
             object[] dataDead;
 
+            Debug.Log(up.name);
+            Debug.Log(oup.name);
+
             //If its the enemy team
             if (oup.team == 0)
             {
@@ -946,16 +949,17 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
                 if (up.type != UnitPieceType.Flag && up.attackType == oup.attackType)
                 {
+                    Debug.Log("huh?");
                     dataDead = new object[]
                     {
-                        x, y, "white", win, "black", oup.currentX, oup.currentY
+                        x, y, "White", win, "Black", oup.currentX, oup.currentY
                     };
 
                     deadBlacks.Add(up);
                     deadWhites.Add(oup);
 
                     up.SetScale(Vector3.one * deathSize);
-                    up.SetPosition(new Vector3(-1 * tileSize, yOffset, 7 * tileSize) - bounds + new Vector3(tileSize / 1, 0, tileSize / 1) + (Vector3.back * deathSpacing) * deadBlacks.Count);
+                    up.SetPosition(new Vector3(-1 * tileSize, yOffset, 7 * tileSize) - bounds + new Vector3(tileSize / 1, 0, tileSize / 1) + (Vector3.back * deathSpacing) * deadWhites.Count);
 
                     PhotonNetwork.RaiseEvent(24, dataDead, raiseEventOptions, sendOptions);
 
@@ -991,7 +995,7 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
                     Debug.Log("wtf");
                     dataDead = new object[]
                     {
-                        x, y, "black", win, ""
+                        x, y, "Black", win, ""
                     };
 
                     deadBlacks.Add(up);
@@ -1027,9 +1031,10 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
                 }
                 else
                 {
+                    Debug.Log("damn");
                     dataDead = new object[]
                     {
-                        x, y, "white", win, ""
+                        x, y, "White", win, ""
                     };
                 }
 
@@ -1049,9 +1054,10 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
                 if (up.type != UnitPieceType.Flag && up.attackType == oup.attackType)
                 {
+                    Debug.Log("huh?1");
                     dataDead = new object[]
                     {
-                        x, y, "black", win, "white", oup.currentX, oup.currentY
+                        x, y, "Black", win, "White", oup.currentX, oup.currentY
                     };
 
                     deadBlacks.Add(oup);
@@ -1095,7 +1101,7 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
                     Debug.Log("wtf2");
                     dataDead = new object[]
                     {
-                        x, y, "white", win, ""
+                        x, y, "White", win, ""
                     };
 
                     deadWhites.Add(up);
@@ -1130,9 +1136,10 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
                 }
                 else
                 {
+                    Debug.Log("damn1");
                     dataDead = new object[]
                     {
-                        x, y, "black", win, ""
+                        x, y, "Black", win, ""
                     };
                 }
 
