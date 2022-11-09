@@ -1,8 +1,14 @@
-﻿using System.Collections;
+﻿using ExitGames.Client.Photon;
+using Photon.Pun;
+using Photon.Realtime;
+using System;
+using System.Collections;
 using UnityEngine;
 
 public class PawnMover : MonoBehaviour
 {
+    public DamaMultiplayerController multiplayerController;
+    public bool isMultiplayer;
     public GameAudio GameAudio;
     public float HorizontalMovementSmoothing;
     public float VerticalMovementSmoothing;
@@ -18,6 +24,19 @@ public class PawnMover : MonoBehaviour
     private bool isPawnMoving;
     private bool isMoveMulticapturing;
 
+
+    //  ====================================
+    GameObject pawnToCapture;
+
+    RaiseEventOptions EventOptions = new RaiseEventOptions
+    {
+        Receivers = ReceiverGroup.Others,
+        CachingOption = EventCaching.AddToRoomCache
+    };
+    SendOptions SendOptions = new SendOptions { Reliability = true };
+
+    //  ====================================
+
     private void Awake()
     {
         pawnMoveValidator = GetComponent<PawnMoveValidator>();
@@ -25,6 +44,50 @@ public class PawnMover : MonoBehaviour
         promotionChecker = GetComponent<PromotionChecker>();
         turnHandler = GetComponent<TurnHandler>();
         cpuPlayer = GetComponent<CPUPlayer>();
+
+
+        if (isMultiplayer)
+            PhotonNetwork.NetworkingClient.EventReceived += MultiplayerEvents;
+    }
+
+    private void MultiplayerEvents(EventData obj)
+    {
+        if (obj.Code == 30)
+        {
+            object[] data = (object[])obj.CustomData;
+
+            GameObject white = multiplayerController.whitePieces.Find(x => x.name == data[0].ToString());
+            GameObject black = multiplayerController.blackPieces.Find(x => x.name == data[0].ToString());
+            GameObject tiles = multiplayerController.tiles.Find(x => x.name == data[1].ToString());
+
+            if (white != null)
+            {
+                white.transform.SetParent(tiles.transform);
+            }
+            else if (black != null)
+            {
+                black.transform.SetParent(tiles.transform);
+            }
+        }
+
+        if (obj.Code == 32)
+        {
+            object[] data = (object[])obj.CustomData;
+
+            GameObject white = multiplayerController.whitePieces.Find(x => x.name == data[0].ToString());
+            GameObject black = multiplayerController.blackPieces.Find(x => x.name == data[0].ToString());
+
+            if (white != null)
+            {
+                multiplayerController.DecrementPawnCount(white);
+                PhotonNetwork.Destroy(white);
+            }
+            else if (black != null)
+            {
+                multiplayerController.DecrementPawnCount(black);
+                PhotonNetwork.Destroy(black);
+            }
+        }
     }
 
     public void PawnClicked(GameObject pawn)
@@ -39,7 +102,12 @@ public class PawnMover : MonoBehaviour
 
     private bool CanPawnBeSelected(GameObject pawn)
     {
-        PawnColor turn = turnHandler.GetTurn();
+        PawnColor turn;
+        if (isMultiplayer)
+            turn = multiplayerController.GetTurn();
+        else
+            turn = turnHandler.GetTurn();
+
         if (isPawnMoving || turn != GetPawnColor(pawn) || isMoveMulticapturing ||
             !moveChecker.PawnHasAnyMove(pawn)) return false;
         if (moveChecker.PawnsHaveCapturingMove(turn) && !moveChecker.PawnHasCapturingMove(pawn)) return false;
@@ -124,6 +192,15 @@ public class PawnMover : MonoBehaviour
     private void ChangeMovedPawnParent()
     {
         lastClickedPawn.transform.SetParent(lastClickedTile.transform);
+
+        if (!isMultiplayer) return;
+
+        object[] data = new object[]
+        {
+            lastClickedPawn.name, lastClickedTile.name
+        };
+
+        PhotonNetwork.RaiseEvent(30, data, EventOptions, SendOptions);
     }
 
     private IEnumerator AnimatePawnMove()
@@ -141,7 +218,11 @@ public class PawnMover : MonoBehaviour
     {
         lastClickedPawn = null;
         isMoveMulticapturing = false;
-        turnHandler.NextTurn();
+
+        if (isMultiplayer)
+            multiplayerController.NextTurn();
+        else
+            turnHandler.NextTurn();
     }
 
     private IEnumerator MoveHorizontal(Vector3 targetPosition)
@@ -173,7 +254,7 @@ public class PawnMover : MonoBehaviour
         isPawnMoving = true;
         yield return DoCaptureMovement();
         RemoveCapturedPawn();
-        yield return null; //Waiting additional frame for captured pawn destruction.
+        while (pawnToCapture != null) yield return null; //Waiting additional frame for captured pawn destruction.
         promotionChecker.CheckPromotion(lastClickedPawn);
         isPawnMoving = false;
         MulticaptureOrEndTurn();
@@ -203,17 +284,36 @@ public class PawnMover : MonoBehaviour
 
     private void RemoveCapturedPawn()
     {
-        GameObject pawnToCapture = pawnMoveValidator.GetPawnToCapture();
-        turnHandler.DecrementPawnCount(pawnToCapture);
-        Destroy(pawnToCapture);
+        pawnToCapture = pawnMoveValidator.GetPawnToCapture();
+        if (isMultiplayer)
+        {
+            object[] data = new object[]
+            {
+            pawnToCapture.name
+            };
+
+            PhotonNetwork.RaiseEvent(32, data, EventOptions, SendOptions);
+
+            multiplayerController.DecrementPawnCount(pawnToCapture);
+        }
+        else
+        {
+            turnHandler.DecrementPawnCount(pawnToCapture);
+
+            Destroy(pawnToCapture);
+        }
     }
 
     private void MulticaptureOrEndTurn()
     {
         if (moveChecker.PawnHasCapturingMove(lastClickedPawn))
+        {
             Multicapture();
+        }
         else
+        {
             EndTurn();
+        }
     }
 
     private void Multicapture()

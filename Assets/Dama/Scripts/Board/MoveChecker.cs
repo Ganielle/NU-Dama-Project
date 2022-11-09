@@ -3,12 +3,13 @@ using UnityEngine;
 
 public class MoveChecker : MonoBehaviour
 {
-    private LinkedList<GameObject> whitePawns = new LinkedList<GameObject>();
-    private LinkedList<GameObject> blackPawns = new LinkedList<GameObject>();
-    private int boardSize;
-    private PawnMoveValidator pawnMoveValidator;
-    private TileGetter tileGetter;
-    private GameObject pawnToCheck;
+    [field: SerializeField] public LinkedList<GameObject> whitePawns = new LinkedList<GameObject>();
+    [field: SerializeField] public LinkedList<GameObject> blackPawns = new LinkedList<GameObject>();
+    public int boardSize;
+    public PawnMoveValidator pawnMoveValidator;
+    public TileGetter tileGetter;
+    public GameObject pawnToCheck;
+    public bool isMultiplayer;
 
     private void Awake()
     {
@@ -18,6 +19,21 @@ public class MoveChecker : MonoBehaviour
     }
 
     private void Start()
+    {
+        if (!isMultiplayer)
+        {
+            var pawnsProperties = GetComponentsInChildren<IPawnProperties>();
+            foreach (var element in pawnsProperties)
+            {
+                if (element.PawnColor == PawnColor.White)
+                    whitePawns.AddLast(element.gameObject);
+                else
+                    blackPawns.AddLast(element.gameObject);
+            }
+        }
+    }
+
+    public void InitializeMultiplayer()
     {
         var pawnsProperties = GetComponentsInChildren<IPawnProperties>();
         foreach (var element in pawnsProperties)
@@ -46,6 +62,7 @@ public class MoveChecker : MonoBehaviour
     public bool PawnHasCapturingMove(GameObject pawn)
     {
         pawnToCheck = pawn;
+
         TileIndex checkingDirectionInIndex = new TileIndex(1, 1);
         if (HasCapturingMoveOnDiagonal(checkingDirectionInIndex))
             return true;
@@ -63,7 +80,9 @@ public class MoveChecker : MonoBehaviour
         {
             var tileToCheck = tileGetter.GetTile(tileIndexToCheck);
             if (pawnMoveValidator.IsCapturingMove(pawnToCheck, tileToCheck))
+            {
                 return true;
+            }
         }
 
         return false;

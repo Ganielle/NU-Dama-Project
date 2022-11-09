@@ -10,6 +10,7 @@ public class CameraMover : MonoBehaviour
     public float ScrollSmoothing;
     public float InitialRotation;
     public GameObject Board;
+    public bool cannotRotateAtStart;
 
     private int boardSize;
     private float minOffset;
@@ -21,8 +22,12 @@ public class CameraMover : MonoBehaviour
     {
         var tilesGenerator = Board.GetComponent<ITilesGenerator>();
         boardSize = tilesGenerator.BoardSize;
-        SetInitialPosition();
-        SetInitialRotation();
+
+        if (!cannotRotateAtStart)
+        {
+            SetInitialPosition();
+            SetInitialRotation();
+        }
     }
 
     private void SetInitialPosition()
@@ -41,12 +46,22 @@ public class CameraMover : MonoBehaviour
         transform.parent.rotation = initialRotation;
     }
 
-    private void LateUpdate()
+    public void SetRotationCameraToShowPlayer(float zAxis)
     {
-        GetMouseInput();
+        SetInitialPosition();
         GetScrollInput();
         ChangePosition();
-        ChangeRotation();
+        localRotation.y = InitialRotation; //Mouse y axis is x axis in world space.
+        var initialRotation = Quaternion.Euler(90f, 0, zAxis);
+        transform.parent.rotation = initialRotation;
+    }
+
+    private void LateUpdate()
+    {
+        //GetMouseInput();
+        GetScrollInput();
+        //ChangePosition();
+        //ChangeRotation();
     }
 
     private void GetMouseInput()

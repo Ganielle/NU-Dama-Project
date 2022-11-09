@@ -8,6 +8,7 @@ public class GameOverPanel : MonoBehaviour
     public TextMeshProUGUI WinnerText;
     public GameAudio GameAudio;
 
+    public bool isMultiplayer;
     private Animator gameOverPanelAnimator;
 
     private void Awake()
@@ -22,6 +23,8 @@ public class GameOverPanel : MonoBehaviour
 
     public void DisableBoard()
     {
+        if (isMultiplayer) return;
+
         Board.SetActive(false);
     }
 

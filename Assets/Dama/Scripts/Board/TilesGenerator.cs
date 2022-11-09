@@ -34,20 +34,24 @@ public class TilesGenerator : MonoBehaviour, ITilesGenerator
 
     private void CreateTiles()
     {
+        int count = 1;
         for (var columnIndex = 0; columnIndex < BoardSize; ++columnIndex)
         {
             for (var rowIndex = 0; rowIndex < BoardSize; ++rowIndex)
-                CreateTile(columnIndex, rowIndex);
+            {
+                CreateTile(columnIndex, rowIndex, count);
+                count++;
+            }
         }
     }
 
-    private void CreateTile(int columnIndex, int rowIndex)
+    private void CreateTile(int columnIndex, int rowIndex, int count)
     {
         var columnTransform = transform.GetChild(columnIndex);
         GameObject instantiatedTile = Instantiate(Tile,
             columnTransform.position + Vector3.forward * rowIndex, Tile.transform.rotation,
             columnTransform);
-        instantiatedTile.name = "Tile" + rowIndex;
+        instantiatedTile.name = "Tile"+ rowIndex;
         instantiatedTile.GetComponent<Renderer>().material =
             (columnIndex + rowIndex) % 2 != 0 ? WhiteMaterial : BlackMaterial;
     }

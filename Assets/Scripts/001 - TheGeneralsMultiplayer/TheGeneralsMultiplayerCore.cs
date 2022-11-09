@@ -77,6 +77,8 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
     //  ========================================
 
+    public GameObject forfeitBtnObj;
+
     [Header("CAMERA")]
     [SerializeField] private Camera currentCamera;
     [SerializeField] private GameObject whiteCamObject;
@@ -278,6 +280,14 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
             doneOtherPlayerTiles = (bool)data[0];
         }
+
+        if (obj.Code == 35)
+        {
+            object[] data = (object[])obj.CustomData;
+
+            winStatusTMP.text = data[0].ToString() +  " TEAM WINS!";
+            winPanelObj.SetActive(true);
+        }
     }
 
     #endregion
@@ -327,6 +337,8 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
     {
         if (playerStates["White"] != "GAME" || playerStates["Black"] != "GAME")
             return;
+
+        forfeitBtnObj.SetActive(true);
 
         CurrentGameState = GameState.GAME;
 
@@ -1167,4 +1179,45 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
     #endregion
 
     #endregion
+
+    public void ForfeitMultiplayer()
+    {
+        RaiseEventOptions raiseEventOptions = new RaiseEventOptions
+        {
+            Receivers = ReceiverGroup.Others,
+            CachingOption = EventCaching.AddToRoomCache
+        };
+        SendOptions sendOptions = new SendOptions { Reliability = true };
+        object[] data;
+
+        if (playerControl == "White")
+        {
+            winStatusTMP.text = "BLACK TEAM WINS!";
+            winPanelObj.SetActive(true);
+
+            data = new object[]
+            {
+                "BLACK"
+            };
+        }
+        else if (playerControl == "Black")
+        {
+            winStatusTMP.text = "WHITE TEAM WINS!";
+            winPanelObj.SetActive(true);
+
+            data = new object[]
+            {
+                "WHITE"
+            };
+        }
+        else
+        {
+            data = new object[]
+            {
+                ""
+            };
+        }
+
+        PhotonNetwork.RaiseEvent(35, data, raiseEventOptions, sendOptions);
+    }
 }

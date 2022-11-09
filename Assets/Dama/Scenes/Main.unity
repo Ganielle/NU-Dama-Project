@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44569314, g: 0.49539763, b: 0.5742314, a: 1}
+  m_IndirectSpecularColor: {r: 0.44569266, g: 0.49539703, b: 0.5742308, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -793,7 +793,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   DigitsSpacing: 2.6
---- !u!43 &237557706
+--- !u!43 &265666207
 Mesh:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1394,6 +1394,7 @@ MonoBehaviour:
   ScrollSmoothing: 8
   InitialRotation: 90
   Board: {fileID: 2074681157}
+  cannotRotateAtStart: 0
 --- !u!114 &534669907
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1728,7 +1729,7 @@ Transform:
   m_GameObject: {fileID: 1044002156}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0.31}
-  m_LocalScale: {x: 0.6362533, y: 0.35795715, z: 0}
+  m_LocalScale: {x: 0.63706, y: 0.35795715, z: 0}
   m_Children: []
   m_Father: {fileID: 534669905}
   m_RootOrder: 0
@@ -1781,7 +1782,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1044002156}
-  m_Mesh: {fileID: 237557706}
+  m_Mesh: {fileID: 265666207}
 --- !u!1 &1071588205
 GameObject:
   m_ObjectHideFlags: 0
@@ -2388,6 +2389,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c68ed375e99375f44b179953db1e87ac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  multiplayerController: {fileID: 0}
+  isMultiplayer: 0
 --- !u!114 &1531258106
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2400,6 +2403,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9fcebab9e608936418f730409d335126, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  boardSize: 0
+  pawnMoveValidator: {fileID: 0}
+  tileGetter: {fileID: 0}
+  pawnToCheck: {fileID: 0}
+  isMultiplayer: 0
 --- !u!114 &1531258107
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3589,6 +3597,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b1347ea00391fa64882aa50f74337c2c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  multiplayerController: {fileID: 0}
+  isMultiplayer: 0
   GameAudio: {fileID: 44111899}
   HorizontalMovementSmoothing: 12
   VerticalMovementSmoothing: 17
@@ -3605,6 +3615,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9fcebab9e608936418f730409d335126, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  boardSize: 0
+  pawnMoveValidator: {fileID: 2074681165}
+  tileGetter: {fileID: 2074681161}
+  pawnToCheck: {fileID: 0}
+  isMultiplayer: 0
 --- !u!114 &2074681165
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3629,6 +3644,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c68ed375e99375f44b179953db1e87ac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  multiplayerController: {fileID: 0}
+  isMultiplayer: 0
 --- !u!114 &2074681167
 MonoBehaviour:
   m_ObjectHideFlags: 0

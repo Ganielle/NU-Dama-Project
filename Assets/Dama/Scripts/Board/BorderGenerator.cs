@@ -11,7 +11,7 @@ public class BorderGenerator : MonoBehaviour
     private Quaternion currentRotation;
     private Vector3 currentDirection;
 
-    private void Awake()
+   private void Awake()
     {
         ITilesGenerator tilesGenerator = GetComponent<ITilesGenerator>();
         boardSize = tilesGenerator.BoardSize;

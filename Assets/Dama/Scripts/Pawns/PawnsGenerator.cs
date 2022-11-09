@@ -30,7 +30,10 @@ public class PawnsGenerator : MonoBehaviour
         {
             for (var columnIndex = 0; columnIndex < boardSize; ++columnIndex)
                 if ((columnIndex + rowIndex) % 2 == 0)
+                {
+                    Debug.Log("WHITE: " + columnIndex + "  " + rowIndex);
                     GeneratePawn(columnIndex, rowIndex, PawnColor.White);
+                }
         }
     }
 
@@ -49,7 +52,10 @@ public class PawnsGenerator : MonoBehaviour
         {
             for (var columnIndex = boardSize - 1; columnIndex >= 0; --columnIndex)
                 if ((rowIndex + columnIndex) % 2 == 0)
+                {
+                    Debug.Log("BLACK: " + columnIndex + "  " + rowIndex);
                     GeneratePawn(columnIndex, rowIndex, PawnColor.Black);
+                }
         }
     }
 }
