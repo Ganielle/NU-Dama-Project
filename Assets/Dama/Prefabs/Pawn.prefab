@@ -54,6 +54,8 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -65,6 +67,7 @@ MeshRenderer:
   m_ProbeAnchor: {fileID: 0}
   m_LightProbeVolumeOverride: {fileID: 0}
   m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
   m_PreserveUVs: 0
   m_IgnoreNormalsForChartDetection: 0
   m_ImportantGI: 0
@@ -77,6 +80,7 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1 &6180183240850365872
 GameObject:
   m_ObjectHideFlags: 0
@@ -91,6 +95,8 @@ GameObject:
   - component: {fileID: 2100081461496759300}
   - component: {fileID: 4151436257388482181}
   - component: {fileID: 6313446390497258333}
+  - component: {fileID: -4105464055938716734}
+  - component: {fileID: -2078093434838088825}
   m_Layer: 0
   m_Name: Pawn
   m_TagString: Untagged
@@ -135,6 +141,8 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -146,6 +154,7 @@ MeshRenderer:
   m_ProbeAnchor: {fileID: 0}
   m_LightProbeVolumeOverride: {fileID: 0}
   m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
   m_PreserveUVs: 0
   m_IgnoreNormalsForChartDetection: 0
   m_ImportantGI: 0
@@ -158,6 +167,7 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
 --- !u!135 &2100081461496759300
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -195,13 +205,48 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: beb018fdfe0e8d54097718fb0ffd9498, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  PawnColor: 0
-  IsKing: 0
   CrownHeight: 0.4
   CrownAppearanceSmoothing: 5
   PositionDifferenceTolerance: 0.01
   Crown: {fileID: 1534303541487452323, guid: 2489dd16575ee0741a1e7e32886a283f, type: 3}
-  PromotionParticles: {fileID: 2816544923751914441, guid: 7342a11b65baa0346a1133b3bf406709,
-    type: 3}
-  PawnSelection: {fileID: 8418305190555947777, guid: 28e53d17c72331b4f8d05bc9156ca239,
-    type: 3}
+  PromotionParticles: {fileID: 2816544923751914441, guid: 7342a11b65baa0346a1133b3bf406709, type: 3}
+  PawnSelection: {fileID: 8418305190555947777, guid: 28e53d17c72331b4f8d05bc9156ca239, type: 3}
+--- !u!114 &-4105464055938716734
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6180183240850365872}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents:
+  - {fileID: -2078093434838088825}
+  sceneViewId: 0
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
+--- !u!114 &-2078093434838088825
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6180183240850365872}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 627855c7f81362d41938ffe0b1475957, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_SynchronizePosition: 1
+  m_SynchronizeRotation: 1
+  m_SynchronizeScale: 1
+  m_UseLocal: 1

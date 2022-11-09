@@ -101,7 +101,10 @@ public class MultiplayerController : MonoBehaviourPunCallbacks
             ClientConnectedChange?.Invoke(this, EventArgs.Empty);
         }
     }
-
+    public string mapCode
+    {
+        get; set;
+    }
 
     //  ====================================
 
@@ -156,7 +159,7 @@ public class MultiplayerController : MonoBehaviourPunCallbacks
         base.OnJoinRandomFailed(returnCode, message);
 
         //  Create room when joining room failed
-        CreateRoom("001", 2);
+        CreateRoom(mapCode, 2);
     }
 
     public override void OnPlayerEnteredRoom(Player newPlayer)
@@ -176,6 +179,7 @@ public class MultiplayerController : MonoBehaviourPunCallbacks
         base.OnJoinedRoom();
 
         CurrentLobbyState = LobbyState.FINDINGMATCH;
+        PhotonNetwork.AutomaticallySyncScene = true;
     }
 
     private void ChangeToMatchFound()
@@ -200,7 +204,6 @@ public class MultiplayerController : MonoBehaviourPunCallbacks
 
     public void CreateRoom(string mapCode, byte maxPlayers)
     {
-        Debug.Log("HI ");
         //  This is for creating room
         //  Custom room properties using hashtable
         ExitGames.Client.Photon.Hashtable customRoomProperties = new ExitGames.Client.Photon.Hashtable()

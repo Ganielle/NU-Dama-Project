@@ -3,6 +3,7 @@
 public class MainMenu : MonoBehaviour
 {
     public Animator TitleScreenAnimator;
+    public GameObject findMatchPanelObj;
 
     public void Play(bool vsCPU)
     {

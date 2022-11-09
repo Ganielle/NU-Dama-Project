@@ -11,6 +11,7 @@ using UnityEngine.UI;
 
 public class FindMatchController : MonoBehaviourPunCallbacks
 {
+    [SerializeField] private string mapCode;
     [SerializeField] private GameObject cancelBtn;
     [SerializeField] private GameObject findBtn;
     [SerializeField] private GameObject matchFoundPanelObj;
@@ -19,6 +20,8 @@ public class FindMatchController : MonoBehaviourPunCallbacks
     [SerializeField] private TextMeshProUGUI timer;
     [SerializeField] private TextMeshProUGUI status;
     [SerializeField] private TextMeshProUGUI matchFoundTimerTMP;
+    [SerializeField] private GameObject findMatchPanelObj;
+    [SerializeField] private bool canFindMatchStart;
 
     //  ================================
 
@@ -43,14 +46,17 @@ public class FindMatchController : MonoBehaviourPunCallbacks
 
     private void Start()
     {
-        status.text = "CONNECTING TO SERVER...";
-        timer.text = "";
+        if (canFindMatchStart)
+        {
+            status.text = "CONNECTING TO SERVER...";
+            timer.text = "";
 
-        PhotonNetwork.ConnectUsingSettings();
-        MultiplayerController.instance.ConnectingToServer = true;
-        MultiplayerController.instance.ClientConnectedToServer = false;
-        findBtn.SetActive(false);
-        cancelBtn.SetActive(false);
+            PhotonNetwork.ConnectUsingSettings();
+            MultiplayerController.instance.ConnectingToServer = true;
+            MultiplayerController.instance.ClientConnectedToServer = false;
+            findBtn.SetActive(false);
+            cancelBtn.SetActive(false);
+        }
     }
 
     private void LobbyStatusChange(object sender, EventArgs e)
@@ -112,7 +118,7 @@ public class FindMatchController : MonoBehaviourPunCallbacks
         }
     }
 
-    private IEnumerator CancelFindMatch()
+    private IEnumerator CancelFindMatch(Action action, bool reconnect)
     {
         PhotonNetwork.Disconnect();
 
@@ -122,6 +128,10 @@ public class FindMatchController : MonoBehaviourPunCallbacks
 
         while (PhotonNetwork.IsConnected)
             yield return null;
+
+        action?.Invoke();
+
+        if (!reconnect) yield break;
 
         PhotonNetwork.ConnectUsingSettings();
         MultiplayerController.instance.ConnectingToServer = true;
@@ -145,7 +155,6 @@ public class FindMatchController : MonoBehaviourPunCallbacks
 
     IEnumerator MatchFoundTimer()
     {
-
         int currentMatchFoundTime = 3;
 
         object[] data;
@@ -189,15 +198,14 @@ public class FindMatchController : MonoBehaviourPunCallbacks
 
         yield return new WaitForSeconds(1f);
 
-        //  CHANGE SCENE
+        if (PhotonNetwork.IsMasterClient)
+        {
+            if (mapCode == "001")
+                PhotonNetwork.LoadLevel("TheGeneralsMultiplayer");
 
-        data = new object[] { "TheGeneralsMultiplayer" };
-
-
-        PhotonNetwork.RaiseEvent(17, data, raiseEventOptions, sendOptions);
-
-
-        SceneManager.LoadScene("TheGeneralsMultiplayer");
+            else if (mapCode == "002")
+                PhotonNetwork.LoadLevel("DamaMultiplayer");
+        }
     }
 
     #endregion
@@ -206,13 +214,6 @@ public class FindMatchController : MonoBehaviourPunCallbacks
 
     private void MatchmakingEvents(EventData obj)
     {
-        if (obj.Code == 17)
-        {
-            object[] dataState = (object[])obj.CustomData;
-
-            SceneManager.LoadScene(dataState[0].ToString());
-        }
-
         if (obj.Code == 18)
         {
             object[] data = (object[])obj.CustomData;
@@ -237,15 +238,44 @@ public class FindMatchController : MonoBehaviourPunCallbacks
     public void FindMatchButton()
     {
         findMatchBtn.interactable = false;
-        ExitGames.Client.Photon.Hashtable customFilterMap = new ExitGames.Client.Photon.Hashtable { { "MAP", "001"} };
+        ExitGames.Client.Photon.Hashtable customFilterMap = new ExitGames.Client.Photon.Hashtable { { "MAP", mapCode } };
 
+        MultiplayerController.instance.mapCode = mapCode;
         PhotonNetwork.JoinRandomRoom(customFilterMap, 2);
+    }
+
+    public void CPUEnabler(bool vsCPU)
+    {
+        PlayerPrefs.SetInt("VsCPU", vsCPU ? 1 : 0);
     }
 
     public void CancelFindMatchButton() 
     {
         cancelFindBtn.interactable = false;
-        StartCoroutine(CancelFindMatch());
+        StartCoroutine(CancelFindMatch(null, true));
+    }
+
+    public void CloseMatchButton()
+    {
+        cancelFindBtn.interactable = false;
+        StartCoroutine(CancelFindMatch(() => 
+        {
+            findMatchPanelObj.SetActive(false);
+        }, false));
+    }
+
+    public void CanFindMatch()
+    {
+        status.text = "CONNECTING TO SERVER...";
+        timer.text = "";
+
+        findMatchPanelObj.SetActive(true);
+
+        PhotonNetwork.ConnectUsingSettings();
+        MultiplayerController.instance.ConnectingToServer = true;
+        MultiplayerController.instance.ClientConnectedToServer = false;
+        findBtn.SetActive(false);
+        cancelBtn.SetActive(false);
     }
 
     #endregion

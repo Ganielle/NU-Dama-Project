@@ -934,9 +934,6 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
             object[] dataDead;
 
-            Debug.Log(up.name);
-            Debug.Log(oup.name);
-
             //If its the enemy team
             if (oup.team == 0)
             {
@@ -992,17 +989,9 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
                     && up.type != UnitPieceType.Flag
                     && up.attackType != oup.attackType)
                 {
-                    Debug.Log("wtf");
-                    dataDead = new object[]
-                    {
-                        x, y, "Black", win, ""
-                    };
-
                     deadBlacks.Add(up);
                     up.SetScale(Vector3.one * deathSize);
                     up.SetPosition(new Vector3(-1 * tileSize, yOffset, 7 * tileSize) - bounds + new Vector3(tileSize / 1, 0, tileSize / 1) + (Vector3.back * deathSpacing) * deadBlacks.Count);
-
-                    PhotonNetwork.RaiseEvent(24, dataDead, raiseEventOptions, sendOptions);
 
                     if (playerControl == "White")
                         nextTurn = "Black";
@@ -1099,16 +1088,10 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
                 {
 
                     Debug.Log("wtf2");
-                    dataDead = new object[]
-                    {
-                        x, y, "White", win, ""
-                    };
 
                     deadWhites.Add(up);
                     up.SetScale(Vector3.one * deathSize);
                     up.SetPosition(new Vector3(8 * tileSize, yOffset, -1 * tileSize) - bounds + new Vector3(tileSize / 1, 0, tileSize / 1) + (Vector3.forward * deathSpacing) * deadWhites.Count);
-
-                    PhotonNetwork.RaiseEvent(24, dataDead, raiseEventOptions, sendOptions);
 
                     if (playerControl == "White")
                         nextTurn = "Black";
