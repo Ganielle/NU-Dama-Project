@@ -58,10 +58,10 @@ public class CameraMover : MonoBehaviour
 
     private void LateUpdate()
     {
-        //GetMouseInput();
+        GetMouseInput();
         GetScrollInput();
-        //ChangePosition();
-        //ChangeRotation();
+        ChangePosition();
+        ChangeRotation();
     }
 
     private void GetMouseInput()

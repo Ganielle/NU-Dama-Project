@@ -8,7 +8,6 @@ public class CurrentTurnEventAnimator : MonoBehaviour
 
     public void CanAttack()
     {
-        Debug.Log("hellooooo");
         multiplayerCore.CanNowAttack = true;
     }
 }

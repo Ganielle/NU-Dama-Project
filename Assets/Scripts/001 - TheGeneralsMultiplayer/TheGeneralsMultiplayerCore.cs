@@ -252,6 +252,7 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
                 if (data[4].ToString() != "")
                 {
                     deadBlacks.Add(unitPieces[(int)data[5], (int)data[6]]);
+                    unitPieces[(int)data[5], (int)data[6]] = null;
                 }
             }
             else
@@ -264,6 +265,7 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
                 if (data[4].ToString() != "")
                 {
                     deadWhites.Add(unitPieces[(int)data[5], (int)data[6]]);
+                    unitPieces[(int)data[5], (int)data[6]] = null;
                 }
             }
 
@@ -287,6 +289,14 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
             winStatusTMP.text = data[0].ToString() +  " TEAM WINS!";
             winPanelObj.SetActive(true);
+        }
+
+
+        if (obj.Code == 35)
+        {
+            object[] data = (object[])obj.CustomData;
+
+            unitPieces[(int)data[1], (int)data[2]] = null;
         }
     }
 
@@ -972,6 +982,9 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
                     PhotonNetwork.RaiseEvent(24, dataDead, raiseEventOptions, sendOptions);
 
+                    unitPieces[oup.currentX, oup.currentY] = null;
+                    unitPieces[originalX, originalY] = null;
+
                     if (playerControl == "White")
                         nextTurn = "Black";
                     else
@@ -1012,10 +1025,14 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
                     data = new object[]
                     {
-                        nextTurn, x, y, previousPosition.x, previousPosition.y, originalX, originalY
+                        nextTurn, originalX, originalY
                     };
 
-                    PhotonNetwork.RaiseEvent(23, data, raiseEventOptions, sendOptions);
+                    PhotonNetwork.RaiseEvent(36, data, raiseEventOptions, sendOptions);
+
+                    unitPieces[originalX, originalY] = null;
+                    Debug.Log(unitPieces[originalX, originalY] == null);
+                    Debug.Log((unitPieces[previousPosition.x, previousPosition.y] == null) + "  " + unitPieces[previousPosition.x, previousPosition.y].name);
 
                     if (CurrentGameState == GameState.GAME)
                     {
@@ -1069,6 +1086,9 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
                     PhotonNetwork.RaiseEvent(24, dataDead, raiseEventOptions, sendOptions);
 
+                    unitPieces[oup.currentX, oup.currentY] = null;
+                    unitPieces[originalX, originalY] = null;
+
                     if (playerControl == "White")
                         nextTurn = "Black";
                     else
@@ -1112,10 +1132,12 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
                     data = new object[]
                     {
-                        nextTurn, x, y, previousPosition.x, previousPosition.y, originalX, originalY
+                        nextTurn, originalX, originalY
                     };
 
-                    PhotonNetwork.RaiseEvent(23, data, raiseEventOptions, sendOptions);
+                    PhotonNetwork.RaiseEvent(36, data, raiseEventOptions, sendOptions);
+
+                    unitPieces[originalX, originalY] = null;
 
                     if (CurrentGameState == GameState.GAME)
                     {

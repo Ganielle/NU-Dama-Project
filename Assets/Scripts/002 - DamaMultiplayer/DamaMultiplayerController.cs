@@ -182,7 +182,7 @@ public class DamaMultiplayerController : MonoBehaviour, ITilesGenerator
 
             CurrentTeam = (PawnColor)data[0];
             team = data[2].ToString();
-            cameraMover.SetRotationCameraToShowPlayer((float)data[1]);
+            //cameraMover.SetRotationCameraToShowPlayer((float)data[1]);
         }
 
         if (obj.Code == 28)
@@ -410,7 +410,7 @@ public class DamaMultiplayerController : MonoBehaviour, ITilesGenerator
                 {
                     (int) PawnColor.Black, -180f, "Black"
                 };
-                cameraMover.SetRotationCameraToShowPlayer(0f);
+                //cameraMover.SetRotationCameraToShowPlayer(0f);
             }
             else
             {
@@ -420,7 +420,7 @@ public class DamaMultiplayerController : MonoBehaviour, ITilesGenerator
                 {
                     (int) PawnColor.White, 0f, "White"
                 };
-                cameraMover.SetRotationCameraToShowPlayer(-180f);
+                //cameraMover.SetRotationCameraToShowPlayer(-180f);
             }
 
             PhotonNetwork.RaiseEvent(27, data, EventOptions, SendOptions);

@@ -255,6 +255,12 @@ public class FindMatchController : MonoBehaviourPunCallbacks
         StartCoroutine(CancelFindMatch(null, true));
     }
 
+    public void BackToMainMenu()
+    {
+        SceneManager.LoadScene("NewMainMenu");
+        StartCoroutine(CancelFindMatch(null, false));
+    }
+
     public void CloseMatchButton()
     {
         cancelFindBtn.interactable = false;
