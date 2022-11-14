@@ -147,6 +147,15 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
     //  ========================================
 
+    RaiseEventOptions EventOptions = new RaiseEventOptions
+    {
+        Receivers = ReceiverGroup.Others,
+        CachingOption = EventCaching.AddToRoomCache
+    };
+    SendOptions SendOptions = new SendOptions { Reliability = true };
+
+    //  ========================================
+
     private void OnEnable()
     {
         loadingStatus = StartCoroutine(TriviaShower());
@@ -226,54 +235,7 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
         {
             object[] data = (object[])obj.CustomData;
 
-            if (CurrentGameState == GameState.GAME)
-                StartCoroutine(NextTurn(data[0].ToString()));
-
-            if (data.Length > 1)
-            {
-                unitPieces[(int)data[1], (int)data[2]] = unitPieces[(int)data[5], (int)data[6]];
-                unitPieces[(int)data[3], (int)data[4]] = null;
-                unitPieces[(int)data[1], (int)data[2]].currentX = (int)data[1];
-                unitPieces[(int)data[1], (int)data[2]].currentY = (int)data[2];
-            }
-        }
-
-        if (obj.Code == 24)
-        {
-            object[] data = (object[])obj.CustomData;
-
-            if (data[2].ToString() == "White")
-            {
-                deadWhites.Add(unitPieces[(int)data[0], (int)data[1]]);
-                unitPieces[(int)data[0], (int)data[1]].SetScale(Vector3.one * deathSize);
-                unitPieces[(int)data[0], (int)data[1]].SetPosition(new Vector3(8 * tileSize, yOffset, -1 * tileSize) - bounds +
-                    new Vector3(tileSize / 1, 0, tileSize / 1) + (Vector3.forward * deathSpacing) * deadWhites.Count);
-
-                if (data[4].ToString() != "")
-                {
-                    deadBlacks.Add(unitPieces[(int)data[5], (int)data[6]]);
-                    unitPieces[(int)data[5], (int)data[6]] = null;
-                }
-            }
-            else
-            {
-                deadBlacks.Add(unitPieces[(int)data[0], (int)data[1]]);
-                unitPieces[(int)data[0], (int)data[1]].SetScale(Vector3.one * deathSize);
-                unitPieces[(int)data[0], (int)data[1]].SetPosition(new Vector3(8 * tileSize, yOffset, -1 * tileSize) - bounds +
-                    new Vector3(tileSize / 1, 0, tileSize / 1) + (Vector3.forward * deathSpacing) * deadBlacks.Count);
-
-                if (data[4].ToString() != "")
-                {
-                    deadWhites.Add(unitPieces[(int)data[5], (int)data[6]]);
-                    unitPieces[(int)data[5], (int)data[6]] = null;
-                }
-            }
-
-            if (data[3].ToString() == "")
-                return;
-
-            winStatusTMP.text = data[3].ToString().ToUpper() + " TEAM WINS!";
-            winPanelObj.SetActive(true);
+            StartCoroutine(NextTurn(data[0].ToString()));
         }
 
         if (obj.Code == 25)
@@ -299,6 +261,63 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
             //unitPieces[(int)data[1], (int)data[2]] = null;
             CanNowAttack = false;
             StartCoroutine(NextTurn(data[0].ToString()));
+        }
+
+        if (obj.Code == 37)
+        {
+            object[] data = (object[])obj.CustomData;
+
+            winStatusTMP.text = data[0].ToString().ToUpper() + " TEAM WINS!";
+            winPanelObj.SetActive(true);
+        }
+
+        if (obj.Code == 38)
+        {
+            object[] data = (object[])obj.CustomData;
+
+            //  DATA SETUP:
+            //  enemy team, position X Enemy, position Y Enemy, position X Player, position Y player, next turn 
+            if (data[0].ToString() == "white")
+            {
+                //  I'M THE ENEMY
+                deadWhites.Add(unitPieces[(int)data[1], (int)data[2]]);
+                //  THE ENEMY IS THE PLAYER
+                deadBlacks.Add(unitPieces[(int)data[3], (int)data[4]]);
+
+                unitPieces[(int)data[1], (int)data[2]].SetScale(Vector3.one * deathSize);
+                unitPieces[(int)data[1], (int)data[2]].SetPosition(new Vector3(8 * tileSize, yOffset, -1 * tileSize) - bounds +
+                    new Vector3(tileSize / 1, 0, tileSize / 1) + (Vector3.forward * deathSpacing) * deadWhites.Count);
+            }
+            else if (data[0].ToString() == "black")
+            {
+                deadBlacks.Add(unitPieces[(int)data[1], (int)data[2]]);
+                deadWhites.Add(unitPieces[(int)data[3], (int)data[4]]);
+
+                unitPieces[(int)data[1], (int)data[2]].SetScale(Vector3.one * deathSize);
+                unitPieces[(int)data[1], (int)data[2]].SetPosition(new Vector3(8 * tileSize, yOffset, -1 * tileSize) - bounds +
+                    new Vector3(tileSize / 1, 0, tileSize / 1) + (Vector3.forward * deathSpacing) * deadBlacks.Count);
+            }
+
+            //  SET YOUR TILES TO NULL BOTH ENEMY AND PLAYER
+            unitPieces[(int)data[1], (int)data[2]] = null;
+            unitPieces[(int)data[3], (int)data[4]] = null;
+            StartCoroutine(NextTurn(data[5].ToString()));
+        }
+
+        if (obj.Code == 39)
+        {
+            object[] data = (object[])obj.CustomData;
+
+            //  I KILL MY SELF BECAUSE I'M A BITCH
+            //  DATA SETUP
+            //  enemy position X, enemy position Y, player previous position X, player previous position Y,
+            if (data[0].ToString() == "black")
+                deadBlacks.Add(unitPieces[(int)data[1], (int)data[2]]);
+            else if (data[0].ToString() == "white")
+                deadWhites.Add(unitPieces[(int)data[1], (int)data[2]]);
+
+            unitPieces[(int)data[1], (int)data[2]] = unitPieces[(int)data[3], (int)data[4]];
+            unitPieces[(int)data[3], (int)data[4]] = null;
         }
     }
 
@@ -937,267 +956,250 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
     private void MoveTo(int originalX, int originalY, int x, int y)
     {
-
-        UnitPiece up = unitPieces[originalX, originalY];
+        UnitPiece player = unitPieces[originalX, originalY];
         Vector2Int previousPosition = new Vector2Int(originalX, originalY);
 
-        RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.Others,
-            CachingOption = EventCaching.AddToRoomCache
-        };
-        SendOptions sendOptions = new SendOptions { Reliability = true };
+        string nextTurn;
+        string died = "";
 
-        string nextTurn; object[] data;
-
-        //Is there another piece on the target position?
         if (unitPieces[x, y] != null)
         {
-            UnitPiece oup = unitPieces[x, y];
+            UnitPiece opponent = unitPieces[x, y];
 
-            if (up.team == oup.team)
+            if (player.team == opponent.team)
                 return;
 
-            object[] dataDead;
-
-            //If its the enemy team
-            if (oup.team == 0)
+            //  OPPONENT IS WHITE
+            if (opponent.team == 0)
             {
-                if (oup.type == UnitPieceType.Flag)
+                //  FOR FLAG
+                if (opponent.type == UnitPieceType.Flag)
                 {
                     win = "black";
                     winStatusTMP.text = win.ToString().ToUpper() + " TEAM WINS!";
+
+                    //  SEND MULTIPLAYER EVENT FOR WIN
+                    object[] data = new object[]
+                    {
+                        win
+                    };
+
+                    PhotonNetwork.RaiseEvent(37, data, EventOptions, SendOptions);
+
                     winPanelObj.SetActive(true);
+
+                    return;
                 }
 
-                if (up.type != UnitPieceType.Flag && up.attackType == oup.attackType)
+                //  KILL EACH OTHER
+                else if (player.attackType == opponent.attackType)
                 {
-                    Debug.Log("huh?");
-                    dataDead = new object[]
+                    deadWhites.Add(opponent);
+                    deadBlacks.Add(player);
+
+                    //  SET YOUR PLAYER SCALE AND POSITION
+                    player.SetScale(Vector3.one * deathSize);
+                    player.SetPosition(new Vector3(8 * tileSize, yOffset, -1 * tileSize) - bounds +
+                        new Vector3(tileSize / 1, 0, tileSize / 1) + (Vector3.forward * deathSpacing) * deadWhites.Count);
+
+                    //  SEND DATA TO OTHER PLAYER TO TELL
+                    //  THAT THEIR PIECE IS DEAD
+                    //  DATA SETUP:
+                    //  enemy team, position X Enemy, position Y Enemy, position X Player, position Y player, next turn 
+                    object[] data = new object[]
                     {
-                        x, y, "White", win, "Black", oup.currentX, oup.currentY
+                        "white", x, y, previousPosition.x, previousPosition.y, "White"
                     };
 
-                    deadBlacks.Add(up);
-                    deadWhites.Add(oup);
+                    PhotonNetwork.RaiseEvent(38, data, EventOptions, SendOptions);
 
-                    up.SetScale(Vector3.one * deathSize);
-                    up.SetPosition(new Vector3(-1 * tileSize, yOffset, 7 * tileSize) - bounds + new Vector3(tileSize / 1, 0, tileSize / 1) + (Vector3.back * deathSpacing) * deadWhites.Count);
-
-                    PhotonNetwork.RaiseEvent(24, dataDead, raiseEventOptions, sendOptions);
-
-                    unitPieces[oup.currentX, oup.currentY] = null;
-                    unitPieces[originalX, originalY] = null;
-
-                    if (playerControl == "White")
-                        nextTurn = "Black";
-                    else
-                        nextTurn = "White";
-
-                    data = new object[]
-                    {
-                        nextTurn, x, y, previousPosition.x, previousPosition.y, originalX, originalY
-                    };
-
-                    PhotonNetwork.RaiseEvent(23, data, raiseEventOptions, sendOptions);
-
-                    if (CurrentGameState == GameState.GAME)
-                    {
-                        CanNowAttack = false;
-                        StartCoroutine(NextTurn(nextTurn));
-                    }
+                    //  SET YOUR TILES TO NULL BOTH ENEMY AND PLAYER
+                    unitPieces[x, y] = null;
+                    unitPieces[previousPosition.x, previousPosition.y] = null;
 
                     if (currentlyDragging)
                         currentlyDragging = null;
                     RemoveHighlightTiles();
 
+                    //  START NEXT TURN
+                    StartCoroutine(NextTurn("White"));
+
                     return;
                 }
-                else if (up.type != UnitPieceType.Flag
-                    && !up.canAttackPieces.Contains(oup.type)
-                    && up.type != UnitPieceType.Flag
-                    && up.attackType != oup.attackType)
+
+                //  KILL MY SELF FOR ATTACK ENEMY WHOSE HIGHER THAN ME
+                else if (!player.canAttackPieces.Contains(opponent.type))
                 {
-                    deadBlacks.Add(up);
-                    up.SetScale(Vector3.one * deathSize);
-                    up.SetPosition(new Vector3(-1 * tileSize, yOffset, 7 * tileSize) - bounds + new Vector3(tileSize / 1, 0, tileSize / 1) + (Vector3.back * deathSpacing) * deadBlacks.Count);
+                    //  KILL MY SELF FOR BEING A BITCH
+                    deadBlacks.Add(player);
 
-                    if (playerControl == "White")
-                        nextTurn = "Black";
-                    else
-                        nextTurn = "White";
+                    //  SET YOUR PLAYER SCALE AND POSITION
+                    player.SetScale(Vector3.one * deathSize);
+                    player.SetPosition(new Vector3(8 * tileSize, yOffset, -1 * tileSize) - bounds +
+                        new Vector3(tileSize / 1, 0, tileSize / 1) + (Vector3.forward * deathSpacing) * deadBlacks.Count);
 
-                    data = new object[]
+                    //  SET MY TILES TO NULL
+                    unitPieces[previousPosition.x, previousPosition.y] = null;
+
+                    //  SEND DATA TO OHTER PLAYER TO TELL THAT
+                    //  I KILL MY SELF BECAUSE I'M A BITCH
+                    //  DATA SETUP
+                    //  player team, player position X, player position Y, next turn
+                    object[] data = new object[]
                     {
-                        nextTurn
+                        "black", previousPosition.x, previousPosition.y, "White"
                     };
 
-                    PhotonNetwork.RaiseEvent(36, data, raiseEventOptions, sendOptions);
-
-                    unitPieces[oup.currentX, oup.currentY] = null;
-                    unitPieces[originalX, originalY] = null;
-
-                    if (CurrentGameState == GameState.GAME)
-                    {
-                        CanNowAttack = false;
-                        StartCoroutine(NextTurn(nextTurn));
-                    }
+                    PhotonNetwork.RaiseEvent(39, data, EventOptions, SendOptions);
 
                     if (currentlyDragging)
                         currentlyDragging = null;
                     RemoveHighlightTiles();
 
+                    //  START NEXT TURN
+                    StartCoroutine(NextTurn("White"));
 
                     return;
                 }
+
+                //  KILL ENEMY BECAUSE I'M STRONG
                 else
                 {
-                    Debug.Log("damn");
-                    dataDead = new object[]
-                    {
-                        x, y, "White", win, ""
-                    };
+                    deadWhites.Add(opponent);
+                    died = "white";
                 }
-
-                deadWhites.Add(oup);
-
-                //oup.SetScale(Vector3.one * deathSize);
-                //oup.SetPosition(new Vector3(8 * tileSize, yOffset, -1 * tileSize) - bounds + new Vector3(tileSize / 1, 0, tileSize / 1) + (Vector3.forward * deathSpacing) * deadWhites.Count);
             }
             else
             {
-                if (oup.type == UnitPieceType.BFlag)
+                //  FOR FLAG
+                if (opponent.type == UnitPieceType.Flag)
                 {
                     win = "white";
                     winStatusTMP.text = win.ToString().ToUpper() + " TEAM WINS!";
+
+                    //  SEND MULTIPLAYER EVENT FOR WIN
+                    object[] data = new object[]
+                    {
+                        win
+                    };
+
+                    PhotonNetwork.RaiseEvent(37, data, EventOptions, SendOptions);
+
                     winPanelObj.SetActive(true);
+
+                    return;
                 }
 
-                if (up.type != UnitPieceType.Flag && up.attackType == oup.attackType)
+                //  KILL EACH OTHER
+                else if (player.attackType == opponent.attackType)
                 {
-                    Debug.Log("huh?1");
-                    dataDead = new object[]
+                    deadBlacks.Add(opponent);
+                    deadWhites.Add(player);
+
+                    //  SET YOUR PLAYER SCALE AND POSITION
+                    player.SetScale(Vector3.one * deathSize);
+                    player.SetPosition(new Vector3(8 * tileSize, yOffset, -1 * tileSize) - bounds +
+                        new Vector3(tileSize / 1, 0, tileSize / 1) + (Vector3.forward * deathSpacing) * deadBlacks.Count);
+
+                    //  SEND DATA TO OTHER PLAYER TO TELL
+                    //  THAT THEIR PIECE IS DEAD
+                    //  DATA SETUP:
+                    //  enemy team, position X Enemy, position Y Enemy, position X Player, position Y player, next turn 
+                    object[] data = new object[]
                     {
-                        x, y, "Black", win, "White", oup.currentX, oup.currentY
+                        "black", x, y, previousPosition.x, previousPosition.y, "Black"
                     };
 
-                    deadBlacks.Add(oup);
-                    deadWhites.Add(up);
+                    PhotonNetwork.RaiseEvent(38, data, EventOptions, SendOptions);
 
-                    up.SetScale(Vector3.one * deathSize);
-                    up.SetPosition(new Vector3(8 * tileSize, yOffset, -1 * tileSize) - bounds + new Vector3(tileSize / 1, 0, tileSize / 1) + (Vector3.forward * deathSpacing) * deadWhites.Count);
-
-                    PhotonNetwork.RaiseEvent(24, dataDead, raiseEventOptions, sendOptions);
-
-                    unitPieces[oup.currentX, oup.currentY] = null;
-                    unitPieces[originalX, originalY] = null;
-
-                    if (playerControl == "White")
-                        nextTurn = "Black";
-                    else
-                        nextTurn = "White";
-
-                    data = new object[]
-                    {
-                        nextTurn, x, y, previousPosition.x, previousPosition.y, originalX, originalY
-                    };
-
-                    PhotonNetwork.RaiseEvent(23, data, raiseEventOptions, sendOptions);
-
-                    if (CurrentGameState == GameState.GAME)
-                    {
-                        CanNowAttack = false;
-                        StartCoroutine(NextTurn(nextTurn));
-                    }
+                    //  SET YOUR TILES TO NULL BOTH ENEMY AND PLAYER
+                    unitPieces[x, y] = null;
+                    unitPieces[previousPosition.x, previousPosition.y] = null;
 
                     if (currentlyDragging)
                         currentlyDragging = null;
                     RemoveHighlightTiles();
 
+                    //  START NEXT TURN
+                    StartCoroutine(NextTurn("Black"));
+
                     return;
                 }
-                else if (up.type != UnitPieceType.Flag
-                    && !up.canAttackPieces.Contains(oup.type)
-                    && up.type != UnitPieceType.Flag
-                    && up.attackType != oup.attackType)
+
+                //  KILL MY SELF FOR ATTACK ENEMY WHOSE HIGHER THAN ME
+                else if (!player.canAttackPieces.Contains(opponent.type))
                 {
+                    //  KILL MY SELF FOR BEING A BITCH
+                    deadWhites.Add(player);
 
-                    Debug.Log("wtf2");
+                    //  SET YOUR PLAYER SCALE AND POSITION
+                    player.SetScale(Vector3.one * deathSize);
+                    player.SetPosition(new Vector3(8 * tileSize, yOffset, -1 * tileSize) - bounds +
+                        new Vector3(tileSize / 1, 0, tileSize / 1) + (Vector3.forward * deathSpacing) * deadWhites.Count);
 
-                    deadWhites.Add(up);
-                    up.SetScale(Vector3.one * deathSize);
-                    up.SetPosition(new Vector3(8 * tileSize, yOffset, -1 * tileSize) - bounds + new Vector3(tileSize / 1, 0, tileSize / 1) + (Vector3.forward * deathSpacing) * deadWhites.Count);
+                    //  SET MY TILES TO NULL
+                    unitPieces[previousPosition.x, previousPosition.y] = null;
 
-                    if (playerControl == "White")
-                        nextTurn = "Black";
-                    else
-                        nextTurn = "White";
-
-                    data = new object[]
+                    //  SEND DATA TO OHTER PLAYER TO TELL THAT
+                    //  I KILL MY SELF BECAUSE I'M A BITCH
+                    //  DATA SETUP
+                    //  player team, player position X, player position Y, next turn
+                    object[] data = new object[]
                     {
-                        nextTurn
+                        "white", previousPosition.x, previousPosition.y, "Black"
                     };
 
-                    PhotonNetwork.RaiseEvent(36, data, raiseEventOptions, sendOptions);
-
-                    unitPieces[oup.currentX, oup.currentY] = null;
-                    unitPieces[originalX, originalY] = null;
-
-                    if (CurrentGameState == GameState.GAME)
-                    {
-                        CanNowAttack = false;
-                        StartCoroutine(NextTurn(nextTurn));
-                    }
+                    PhotonNetwork.RaiseEvent(39, data, EventOptions, SendOptions);
 
                     if (currentlyDragging)
                         currentlyDragging = null;
                     RemoveHighlightTiles();
 
+                    //  START NEXT TURN
+                    StartCoroutine(NextTurn("Black"));
+
                     return;
                 }
+
+                //  KILL ENEMY BECAUSE I'M STRONG
                 else
                 {
-                    Debug.Log("damn1");
-                    dataDead = new object[]
-                    {
-                        x, y, "Black", win, ""
-                    };
+                    deadBlacks.Add(opponent);
+                    died = "black";
                 }
-
-                deadBlacks.Add(oup);
-                //oup.SetScale(Vector3.one * deathSize);
-                //oup.SetPosition(new Vector3(-1 * tileSize, yOffset, 7 * tileSize) - bounds + new Vector3(tileSize / 1, 0, tileSize / 1) + (Vector3.back * deathSpacing) * deadBlacks.Count);
             }
-
-
-            PhotonNetwork.RaiseEvent(24, dataDead, raiseEventOptions, sendOptions);
         }
-        unitPieces[x, y] = up;
+
+        nextTurn = CurrentTurn == "White" ? "Black" : "White";
+
+        if (died == "")
+            died = "";
+
+        object[] moveData = new object[]
+        {
+            died, x, y, previousPosition.x, previousPosition.y
+        };
+
+        PhotonNetwork.RaiseEvent(39, moveData, EventOptions, SendOptions);
+
+        unitPieces[x, y] = player;
         unitPieces[previousPosition.x, previousPosition.y] = null;
 
         PositionSinglePiece(x, y);
-
-        if (playerControl == "White")
-            nextTurn = "Black";
-        else
-            nextTurn = "White";
-
-        data = new object[]
-        {
-            nextTurn, x, y, previousPosition.x, previousPosition.y, originalX, originalY
-        };
-
-        PhotonNetwork.RaiseEvent(23, data, raiseEventOptions, sendOptions);
-
-        if (CurrentGameState == GameState.GAME)
-        {
-            CanNowAttack = false;
-            StartCoroutine(NextTurn(nextTurn));
-        }
 
         if (currentlyDragging)
             currentlyDragging = null;
         RemoveHighlightTiles();
 
-        return;
+        object[] nextTurnData = new object[]
+        {
+            nextTurn
+        };
+
+        PhotonNetwork.RaiseEvent(23, nextTurnData, EventOptions, SendOptions);
+
+        //  START NEXT TURN
+        StartCoroutine(NextTurn(nextTurn));
     }
 
     #endregion
