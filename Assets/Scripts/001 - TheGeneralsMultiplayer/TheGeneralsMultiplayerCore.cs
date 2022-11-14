@@ -246,7 +246,7 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
             {
                 deadWhites.Add(unitPieces[(int)data[0], (int)data[1]]);
                 unitPieces[(int)data[0], (int)data[1]].SetScale(Vector3.one * deathSize);
-                unitPieces[(int)data[0], (int)data[1]].SetPosition(new Vector3(8 * tileSize, yOffset, -1 * tileSize) - bounds + 
+                unitPieces[(int)data[0], (int)data[1]].SetPosition(new Vector3(8 * tileSize, yOffset, -1 * tileSize) - bounds +
                     new Vector3(tileSize / 1, 0, tileSize / 1) + (Vector3.forward * deathSpacing) * deadWhites.Count);
 
                 if (data[4].ToString() != "")
@@ -292,11 +292,13 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
         }
 
 
-        if (obj.Code == 35)
+        if (obj.Code == 36)
         {
             object[] data = (object[])obj.CustomData;
 
-            unitPieces[(int)data[1], (int)data[2]] = null;
+            //unitPieces[(int)data[1], (int)data[2]] = null;
+            CanNowAttack = false;
+            StartCoroutine(NextTurn(data[0].ToString()));
         }
     }
 
@@ -1025,14 +1027,13 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
                     data = new object[]
                     {
-                        nextTurn, originalX, originalY
+                        nextTurn
                     };
 
                     PhotonNetwork.RaiseEvent(36, data, raiseEventOptions, sendOptions);
 
+                    unitPieces[oup.currentX, oup.currentY] = null;
                     unitPieces[originalX, originalY] = null;
-                    Debug.Log(unitPieces[originalX, originalY] == null);
-                    Debug.Log((unitPieces[previousPosition.x, previousPosition.y] == null) + "  " + unitPieces[previousPosition.x, previousPosition.y].name);
 
                     if (CurrentGameState == GameState.GAME)
                     {
@@ -1132,11 +1133,12 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
 
                     data = new object[]
                     {
-                        nextTurn, originalX, originalY
+                        nextTurn
                     };
 
                     PhotonNetwork.RaiseEvent(36, data, raiseEventOptions, sendOptions);
 
+                    unitPieces[oup.currentX, oup.currentY] = null;
                     unitPieces[originalX, originalY] = null;
 
                     if (CurrentGameState == GameState.GAME)
