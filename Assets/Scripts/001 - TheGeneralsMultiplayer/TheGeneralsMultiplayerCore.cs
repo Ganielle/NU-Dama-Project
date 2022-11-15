@@ -301,7 +301,6 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
             //  SET YOUR TILES TO NULL BOTH ENEMY AND PLAYER
             unitPieces[(int)data[1], (int)data[2]] = null;
             unitPieces[(int)data[3], (int)data[4]] = null;
-            StartCoroutine(NextTurn(data[5].ToString()));
         }
 
         if (obj.Code == 39)
@@ -1008,7 +1007,7 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
                     //  enemy team, position X Enemy, position Y Enemy, position X Player, position Y player, next turn 
                     object[] data = new object[]
                     {
-                        "white", x, y, previousPosition.x, previousPosition.y, "White"
+                        "white", x, y, previousPosition.x, previousPosition.y
                     };
 
                     PhotonNetwork.RaiseEvent(38, data, EventOptions, SendOptions);
@@ -1020,6 +1019,13 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
                     if (currentlyDragging)
                         currentlyDragging = null;
                     RemoveHighlightTiles();
+
+                    object[] attackNext = new object[]
+                    {
+                         "White"
+                    };
+
+                    PhotonNetwork.RaiseEvent(23, attackNext, EventOptions, SendOptions);
 
                     //  START NEXT TURN
                     StartCoroutine(NextTurn("White"));
@@ -1047,7 +1053,7 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
                     //  player team, player position X, player position Y, next turn
                     object[] data = new object[]
                     {
-                        "black", previousPosition.x, previousPosition.y, "White"
+                        "black", previousPosition.x, previousPosition.y
                     };
 
                     PhotonNetwork.RaiseEvent(39, data, EventOptions, SendOptions);
@@ -1055,6 +1061,13 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
                     if (currentlyDragging)
                         currentlyDragging = null;
                     RemoveHighlightTiles();
+
+                    object[] attackNext = new object[]
+                    {
+                         "White"
+                    };
+
+                    PhotonNetwork.RaiseEvent(23, attackNext, EventOptions, SendOptions);
 
                     //  START NEXT TURN
                     StartCoroutine(NextTurn("White"));
@@ -1107,7 +1120,7 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
                     //  enemy team, position X Enemy, position Y Enemy, position X Player, position Y player, next turn 
                     object[] data = new object[]
                     {
-                        "black", x, y, previousPosition.x, previousPosition.y, "Black"
+                        "black", x, y, previousPosition.x, previousPosition.y
                     };
 
                     PhotonNetwork.RaiseEvent(38, data, EventOptions, SendOptions);
@@ -1119,6 +1132,13 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
                     if (currentlyDragging)
                         currentlyDragging = null;
                     RemoveHighlightTiles();
+
+                    object[] attackNext = new object[]
+                    {
+                         "Black"
+                    };
+
+                    PhotonNetwork.RaiseEvent(23, attackNext, EventOptions, SendOptions);
 
                     //  START NEXT TURN
                     StartCoroutine(NextTurn("Black"));
@@ -1146,7 +1166,7 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
                     //  player team, player position X, player position Y, next turn
                     object[] data = new object[]
                     {
-                        "white", previousPosition.x, previousPosition.y, "Black"
+                        "white", previousPosition.x, previousPosition.y
                     };
 
                     PhotonNetwork.RaiseEvent(39, data, EventOptions, SendOptions);
@@ -1154,6 +1174,13 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
                     if (currentlyDragging)
                         currentlyDragging = null;
                     RemoveHighlightTiles();
+
+                    object[] attackNext = new object[]
+                    {
+                         "Black"
+                    };
+
+                    PhotonNetwork.RaiseEvent(23, attackNext, EventOptions, SendOptions);
 
                     //  START NEXT TURN
                     StartCoroutine(NextTurn("Black"));
