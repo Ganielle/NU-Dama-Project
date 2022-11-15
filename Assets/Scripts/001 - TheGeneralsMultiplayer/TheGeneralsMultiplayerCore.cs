@@ -306,14 +306,37 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
         if (obj.Code == 39)
         {
             object[] data = (object[])obj.CustomData;
+            //  DATA SETUP
+            //  player team, player position X, player position Y
+            if (data[0].ToString() == "black")
+                deadBlacks.Add(unitPieces[(int)data[1], (int)data[2]]);
+            else
+                deadWhites.Add(unitPieces[(int)data[1], (int)data[2]]);
+
+            unitPieces[(int)data[1], (int)data[2]] = null;
+        }
+
+        if (obj.Code == 40)
+        {
+            object[] data = (object[])obj.CustomData;
 
             //  I KILL MY SELF BECAUSE I'M A BITCH
             //  DATA SETUP
-            //  enemy position X, enemy position Y, player previous position X, player previous position Y,
+            //  died team, player new pos X, player new pos Y, player old pos X, player old pos Y
             if (data[0].ToString() == "black")
+            {
                 deadBlacks.Add(unitPieces[(int)data[1], (int)data[2]]);
+                unitPieces[(int)data[1], (int)data[2]].SetScale(Vector3.one * deathSize);
+                unitPieces[(int)data[1], (int)data[2]].SetPosition(new Vector3(8 * tileSize, yOffset, -1 * tileSize) - bounds +
+                    new Vector3(tileSize / 1, 0, tileSize / 1) + (Vector3.forward * deathSpacing) * deadBlacks.Count);
+            }
             else if (data[0].ToString() == "white")
+            {
                 deadWhites.Add(unitPieces[(int)data[1], (int)data[2]]);
+                unitPieces[(int)data[1], (int)data[2]].SetScale(Vector3.one * deathSize);
+                unitPieces[(int)data[1], (int)data[2]].SetPosition(new Vector3(8 * tileSize, yOffset, -1 * tileSize) - bounds +
+                    new Vector3(tileSize / 1, 0, tileSize / 1) + (Vector3.forward * deathSpacing) * deadWhites.Count);
+            }
 
             unitPieces[(int)data[1], (int)data[2]] = unitPieces[(int)data[3], (int)data[4]];
             unitPieces[(int)data[3], (int)data[4]] = null;
@@ -972,8 +995,9 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
             if (opponent.team == 0)
             {
                 //  FOR FLAG
-                if (opponent.type == UnitPieceType.Flag)
+                if (opponent.attackType == UnitPieceType.Flag)
                 {
+                    Debug.Log("win black");
                     win = "black";
                     winStatusTMP.text = win.ToString().ToUpper() + " TEAM WINS!";
 
@@ -986,8 +1010,6 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
                     PhotonNetwork.RaiseEvent(37, data, EventOptions, SendOptions);
 
                     winPanelObj.SetActive(true);
-
-                    return;
                 }
 
                 //  KILL EACH OTHER
@@ -1085,8 +1107,9 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
             else
             {
                 //  FOR FLAG
-                if (opponent.type == UnitPieceType.Flag)
+                if (opponent.attackType == UnitPieceType.Flag)
                 {
+                    Debug.Log("win white");
                     win = "white";
                     winStatusTMP.text = win.ToString().ToUpper() + " TEAM WINS!";
 
@@ -1099,8 +1122,6 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
                     PhotonNetwork.RaiseEvent(37, data, EventOptions, SendOptions);
 
                     winPanelObj.SetActive(true);
-
-                    return;
                 }
 
                 //  KILL EACH OTHER
@@ -1163,7 +1184,7 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
                     //  SEND DATA TO OHTER PLAYER TO TELL THAT
                     //  I KILL MY SELF BECAUSE I'M A BITCH
                     //  DATA SETUP
-                    //  player team, player position X, player position Y, next turn
+                    //  player team, player position X, player position Y
                     object[] data = new object[]
                     {
                         "white", previousPosition.x, previousPosition.y
@@ -1202,12 +1223,14 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
         if (died == "")
             died = "";
 
+        //  DATA SETUP
+        //  died team, player new pos X, player new pos Y, player old pos X, player old pos Y
         object[] moveData = new object[]
         {
             died, x, y, previousPosition.x, previousPosition.y
         };
 
-        PhotonNetwork.RaiseEvent(39, moveData, EventOptions, SendOptions);
+        PhotonNetwork.RaiseEvent(40, moveData, EventOptions, SendOptions);
 
         unitPieces[x, y] = player;
         unitPieces[previousPosition.x, previousPosition.y] = null;
@@ -1218,15 +1241,18 @@ public class TheGeneralsMultiplayerCore : MonoBehaviour
             currentlyDragging = null;
         RemoveHighlightTiles();
 
-        object[] nextTurnData = new object[]
+        if (playerStates[playerControl] != "TACTICS" && win == "")
         {
+            object[] nextTurnData = new object[]
+            {
             nextTurn
-        };
+            };
 
-        PhotonNetwork.RaiseEvent(23, nextTurnData, EventOptions, SendOptions);
+            PhotonNetwork.RaiseEvent(23, nextTurnData, EventOptions, SendOptions);
 
-        //  START NEXT TURN
-        StartCoroutine(NextTurn(nextTurn));
+            //  START NEXT TURN
+            StartCoroutine(NextTurn(nextTurn));
+        }
     }
 
     #endregion

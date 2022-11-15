@@ -209,7 +209,7 @@ MonoBehaviour:
   isMultiplayer: 0
   type: 0
   attackType: 4
-  canAttackPieces: 1200000011000000100000001e000000
+  canAttackPieces: 12000000110000001e000000
   pieceName: {fileID: 2509277439235759898}
 --- !u!114 &5369522006790619456
 MonoBehaviour:
